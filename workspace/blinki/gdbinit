@@ -1,0 +1,21 @@
+# redefine "-exec-run" to use "continue" because the target doesn't support "run"
+define -exec-run
+  printf "Using the continue instead of run.\n"
+  -exec-continue
+  end
+
+printf "Redefined -exec-run\n"
+
+set remoteaddresssize 64
+set remotetimeout 999999
+target remote localhost:2000
+#set download-write-size 2000
+#set remote memory-write-packet-size 2000
+#set remote memory-write-packet-size fixed
+#set remote memory-read-packet-size 2000
+#set remote memory-read-packet-size fixed
+eraseflash
+file Debug/blinki
+load
+
+printf "Done loading the program.\n"
