@@ -4,22 +4,28 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../color.c \
 ../infomem.c \
 ../lcd.c \
 ../main.c \
-../menu.c 
+../menu.c \
+../utils.c 
 
 OBJS += \
+./color.o \
 ./infomem.o \
 ./lcd.o \
 ./main.o \
-./menu.o 
+./menu.o \
+./utils.o 
 
 C_DEPS += \
+./color.d \
 ./infomem.d \
 ./lcd.d \
 ./main.d \
-./menu.d 
+./menu.d \
+./utils.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
