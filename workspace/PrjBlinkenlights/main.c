@@ -159,9 +159,9 @@
  **** Global Variables ******************************************************
  ****************************************************************************/
 
-int8_t RotEncValue = 0;   // ISR -> main(): will be -128 .. +127 depending on rotation speed
+volatile int8_t RotEncValue = 0;   // ISR -> main(): will be -128 .. +127 depending on rotation speed
 
-uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button value
+volatile uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button value
 #define BV_ROTENC_NEW 0x01
 #define BV_ROTENC_OLD 0x02
 #define BV_ROTENC     0x03
@@ -177,11 +177,11 @@ uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button va
 #define BV_BUTTON_EDGE (BV_BUTTON_RISE || BV_BUTTON_FALL)
 #define BV_EDGE ((ButtonValue & (BV_ROTENC_OLD | BV_BUTTON_OLD)) ^ BV_SHIFT)
 
-int16_t LedLcdFade;   // main() -> ISR:
+volatile int16_t LedLcdFade;   // main() -> ISR:
 
-uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which timeout was reached
+volatile uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which timeout was reached
 #define TIMEOUT_LCD_BACKLIGHT    0x01
-uint16_t TimeoutLcdBacklight;
+volatile uint16_t TimeoutLcdBacklight;
 
 // TODO: do we need this define?
 #define TIMER_DIV   (8*16)
