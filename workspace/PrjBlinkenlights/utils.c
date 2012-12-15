@@ -32,3 +32,17 @@ uint16_t Int2BCD(uint16_t i) {
   }
   return Scratch.BCD;
 }
+
+/**
+ * TODO: first find which justification is required
+ */
+void Int2Str(int i, char* s) {
+  // convert to BCD
+  i = Int2BCD(i);
+  // make a string
+  *s += 4;
+  do {
+    *s-- = (i & 0x000F) + '0';
+    i = i >> 4;
+  } while (i > 0);
+}
