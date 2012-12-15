@@ -49,13 +49,13 @@ int main(void) {
   FCTL1 = FWKEY | ERASE;        // set ERASE mode
   epersistent.Version = 0;      // initiate erase of the segment, 4819 cycles ~ 12ms, CPU is halted
   FCTL1 = FWKEY | WRT;          // set WRITE mode
-  epersistent=rpersistent;      // byte wise or word wise write, 30 cycles ~ 75µs per byte/word, must not exceed 10ms in total!
+  epersistent=rpersistent;      // byte wise or word wise write, 30 cycles ~ 75us per byte/word, must not exceed 10ms in total!
   FCTL1 = FWKEY | 0;            // disable WRITE mode
   FCTL3 = FWKEY | LOCK;         // set LOCK bit
 
   while (1) {}
 
-  // LPM3, effectifely stopping execution
+  // LPM3, effectively stopping execution
   LPM3;
 
   return 0;
