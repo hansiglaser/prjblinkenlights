@@ -28,7 +28,7 @@ all: PrjBlinkenlights
 PrjBlinkenlights: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: Cross GCC Linker'
-	msp430-gcc -mmcu=msp430g2231 -o "PrjBlinkenlights" $(OBJS) $(USER_OBJS) $(LIBS)
+	msp430-gcc -mmcu=msp430g2553 -o "PrjBlinkenlights" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
