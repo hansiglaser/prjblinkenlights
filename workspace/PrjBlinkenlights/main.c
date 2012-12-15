@@ -164,8 +164,8 @@ int main(void) {
     __bis_SR_register(LPM0_bits + GIE);
     // wake-up from LPM0 -> we have something to do
     // TODO
-    if (BV_ROTENC_RISE) LedLcdFade = (65536/244)/5;
-    if (BV_BUTTON_RISE) LedLcdFade = -(65536/244)/5;
+    if (BV_ROTENC_RISE) LedLcdFade = (65536/244)*5;
+    if (BV_BUTTON_RISE) LedLcdFade = -(65536/244);
     if (RotEncValue > 0)
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
@@ -180,6 +180,8 @@ int RotEncDec = 0;   // not really necessary
 int RotEncInc = 0;   // not really necessary
 uint8_t RotEncCount = 0;   // upward counter to measure time between steps for virtual acceleration
 int8_t RotEncDir = 0;      // direction of last step, to avoid acceleration on rapid changes of the rotation direction
+
+uint16_t LedLcdBacklight = 0;
 
 /**
  * Translate number of counts between successive rotary encoder steps to a
@@ -279,24 +281,25 @@ __interrupt void Timer_A (void) {
   if (LedLcdFade != 0) {
     if (LedLcdFade > 0) {
       // fade-in
-      if (TA0CCR1 < (0xFFFF - LedLcdFade)) {
-        TA0CCR1 += LedLcdFade;
+      if (LedLcdBacklight < (0xFFFF - LedLcdFade)) {
+        LedLcdBacklight += LedLcdFade;
       } else {
         // completely on, done
-        TA0CCR1 = 0xFFFF;
+        LedLcdBacklight = 0xFFFF;
         LedLcdFade = 0;
       }
     } else {  // LedLcdFade < 0
       // fade-out
       // when decrementing, the LED sometimes flickers, this is because the timer can overflow
-      if (TA0CCR1 > -LedLcdFade) {
-        TA0CCR1 += LedLcdFade;
+      if (LedLcdBacklight > -LedLcdFade) {
+        LedLcdBacklight += LedLcdFade;
       } else {
         // completely off, done
-        TA0CCR1 = 0;
+        LedLcdBacklight = 0;
         LedLcdFade = 0;
       }
     }
+    TA0CCR1 = Brightness2PWM(LedLcdBacklight);
   }
 /*
   // when decrementing, the LED sometimes flickers, this is because the timer can overflow

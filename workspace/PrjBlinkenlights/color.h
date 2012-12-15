@@ -29,5 +29,6 @@ typedef struct {
   };
 } TColor;
 
+uint16_t Brightness2PWM(uint16_t Brightness);
 
 #endif /* COLOR_H_ */

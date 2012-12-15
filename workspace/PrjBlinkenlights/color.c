@@ -6,7 +6,22 @@
  */
 
 #include <math.h>
+#include <stdint.h>
 #include "color.h"
+
+/**
+ * Convert intensity to PWM with non-linear function
+ */
+uint16_t Brightness2PWM(uint16_t Brightness) {
+  float x;
+  uint16_t y;
+  if (Brightness == 0) return 0;
+  if (Brightness == 0xFFFF) return 0xFFFF;
+  // TODO: find a better fixed-point solution (this adds ~4kB to the executable!)
+  x = expf(Brightness*0.0001);
+  y = floor((x-1.0) * (65535.0 / (exp(6.5535)-1.0)));
+  return y;
+}
 
 /**
  * Convert RGB color to HSV
