@@ -17,7 +17,8 @@
  *
  */
 
-#include <msp430g2231.h>
+//#include <msp430g2231.h>
+#include <msp430g2553.h>
 
 #define LED_R   BIT0
 #define LED_G   BIT6
@@ -65,9 +66,9 @@ int main(void) {
 }
 
 // Timer A0 interrupt service routine for CC1 and TA interrupt
-#pragma vector = TIMERA1_VECTOR
+#pragma vector = TIMER0_A1_VECTOR
 __interrupt void Timer_A (void) {
-  TACTL &= ~TAIFG;      // clear TAIFG (seems necessary!)
+  TA0CTL &= ~TAIFG;      // clear TAIFG (seems necessary!)
   // divide ISR rate for slower blinking LED
   timerCount++;
   if (timerCount >= TIMER_DIV) {

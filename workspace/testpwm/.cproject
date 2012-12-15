@@ -26,7 +26,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.compiler.1938079802" name="Cross GCC Compiler" superClass="cdt.managedbuild.tool.gnu.cross.c.compiler">
 								<option defaultValue="gnu.c.optimization.level.none" id="gnu.c.compiler.option.optimization.level.1090333110" name="Optimization Level" superClass="gnu.c.compiler.option.optimization.level" valueType="enumerated"/>
 								<option id="gnu.c.compiler.option.debugging.level.267204243" name="Debug Level" superClass="gnu.c.compiler.option.debugging.level" value="gnu.c.debugging.level.max" valueType="enumerated"/>
-								<option id="gnu.c.compiler.option.misc.other.1180325239" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -mmcu=msp430g2231" valueType="string"/>
+								<option id="gnu.c.compiler.option.misc.other.1180325239" name="Other flags" superClass="gnu.c.compiler.option.misc.other" value="-c -fmessage-length=0 -mmcu=msp430g2553" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.compiler.input.429252928" superClass="cdt.managedbuild.tool.gnu.c.compiler.input"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.compiler.1882310900" name="Cross G++ Compiler" superClass="cdt.managedbuild.tool.gnu.cross.cpp.compiler">
@@ -34,7 +34,7 @@
 								<option id="gnu.cpp.compiler.option.debugging.level.1994625311" name="Debug Level" superClass="gnu.cpp.compiler.option.debugging.level" value="gnu.cpp.compiler.debugging.level.max" valueType="enumerated"/>
 							</tool>
 							<tool id="cdt.managedbuild.tool.gnu.cross.c.linker.222252830" name="Cross GCC Linker" superClass="cdt.managedbuild.tool.gnu.cross.c.linker">
-								<option id="gnu.c.link.option.ldflags.204231112" superClass="gnu.c.link.option.ldflags" value="-mmcu=msp430g2231" valueType="string"/>
+								<option id="gnu.c.link.option.ldflags.204231112" name="Linker flags" superClass="gnu.c.link.option.ldflags" value="-mmcu=msp430g2553" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.c.linker.input.204525930" superClass="cdt.managedbuild.tool.gnu.c.linker.input">
 									<additionalInput kind="additionalinputdependency" paths="$(USER_OBJS)"/>
 									<additionalInput kind="additionalinput" paths="$(LIBS)"/>
@@ -43,7 +43,7 @@
 							<tool id="cdt.managedbuild.tool.gnu.cross.cpp.linker.2104504767" name="Cross G++ Linker" superClass="cdt.managedbuild.tool.gnu.cross.cpp.linker"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.archiver.1548555478" name="Cross GCC Archiver" superClass="cdt.managedbuild.tool.gnu.cross.archiver"/>
 							<tool id="cdt.managedbuild.tool.gnu.cross.assembler.643622375" name="Cross GCC Assembler" superClass="cdt.managedbuild.tool.gnu.cross.assembler">
-								<option id="gnu.both.asm.option.flags.1508713010" superClass="gnu.both.asm.option.flags" value="-mmcu=msp430g2231" valueType="string"/>
+								<option id="gnu.both.asm.option.flags.1508713010" name="Assembler flags" superClass="gnu.both.asm.option.flags" value="-mmcu=msp430g2553" valueType="string"/>
 								<inputType id="cdt.managedbuild.tool.gnu.assembler.input.1914101690" superClass="cdt.managedbuild.tool.gnu.assembler.input"/>
 							</tool>
 						</toolChain>
