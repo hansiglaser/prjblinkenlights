@@ -24,7 +24,7 @@
  * |                 |
  * |                 |
  * +--| |--| |--| |--+
- *     A    B    C
+ *     A    C    B
  *
  * P-P is closed when the button us pressed
  *
