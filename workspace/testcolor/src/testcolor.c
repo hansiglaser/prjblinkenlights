@@ -39,6 +39,7 @@ int main(void) {
   TColor RGB;
   TColor HSV;
   int Hi,Si,Vi,Ri,Gi,Bi;
+  int T;
   int Errors = 0;
   int Error;
   int TotalError = 0;
@@ -109,6 +110,16 @@ int main(void) {
     }
   }
 
+  printf("<pre>\n");
+  for (T = 1000; T <= 40000; T+=100) {
+    White2RGB(T,&RGB);
+    printf("<span style=\"background:#%02x%02x%02x\"> %5d K -> %5d %5d %5d - #%02x%02x%02x</span>\n",
+        RGB.RGB.R >> 8,RGB.RGB.G >> 8,RGB.RGB.B >> 8,
+        T,
+        RGB.RGB.R,RGB.RGB.G,RGB.RGB.B,
+        RGB.RGB.R >> 8,RGB.RGB.G >> 8,RGB.RGB.B >> 8);
+  }
+  printf("</pre>\n");
 
   printf("%d errors found, total deviation is %d.\n",Errors,TotalError);
   return (Errors == 0 ? 0 : 1);

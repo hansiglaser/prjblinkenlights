@@ -123,15 +123,46 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
 }
 
 /**
+ * Create an RGB color from a color temperature
  *
+ * @param  Temp  color temperature in Kelvin, 1000-40000
+ * @param  RGB   resulting RGB value
+ *
+ * http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
  */
 void White2RGB(const uint16_t Temp, TColor* RGB) {
-/*
-  float F;
-  double d;
+  float R,G,B;
+  int32_t Ri,Gi,Bi;
 
-  F = logf(12.345*Temp);
-*/
+  if (Temp <= 6600) {
+    RGB->RGB.R = 0xFFFF;
+  } else {
+    R = 329.698727446/255.0*65535.0 * powf((Temp - 6000)*0.01,-0.1332047592);
+    Ri = (int32_t)R;
+    if      (Ri < 0)      RGB->RGB.R = 0;
+    else if (Ri > 0xFFFF) RGB->RGB.R = 0xFFFF;
+    else                  RGB->RGB.R = Ri;
+  }
 
+  if (Temp <= 6600) {
+    G = 99.4708025861/255.0*65535.0 * logf(Temp*0.01) - 161.1195681661/255.0*65535.0;
+  } else {
+    G = 288.1221695283/255.0*65535.0 * powf((Temp - 6000)*0.01,-0.0755148492);
+  }
+  Gi = (int32_t)G;
+  if      (Gi < 0)      RGB->RGB.G = 0;
+  else if (Gi > 0xFFFF) RGB->RGB.G = 0xFFFF;
+  else                  RGB->RGB.G = Gi;
 
+  if (Temp >= 6600) {
+    RGB->RGB.B = 0xFFFF;
+  } else if (Temp <= 1900) {
+    RGB->RGB.B = 0;
+  } else {
+    B = 138.5177312231/255.0*65535.0 * logf((Temp-1000)*0.01) - 305.0447927307/255.0*65535.0;
+    Bi = (int32_t)B;
+    if      (Bi < 0)      RGB->RGB.B = 0;
+    else if (Bi > 0xFFFF) RGB->RGB.B = 0xFFFF;
+    else                  RGB->RGB.B = Bi;
+  }
 }

@@ -32,5 +32,6 @@ typedef struct {
 uint16_t Brightness2PWM(uint16_t Brightness);
 void RGB2HSV(const TColor* RGB, TColor* HSV);
 void HSV2RGB(const TColor* HSV, TColor* RGB);
+void White2RGB(const uint16_t Temp, TColor* RGB);
 
 #endif /* COLOR_H_ */
