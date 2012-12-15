@@ -14,6 +14,11 @@
  *  - Timer A1 is used with a trick so that all three CCRs including CCR0
  *    can be used for PWMs for the RGB LED strip.
  *
+ * Timer A1 is setup to count the full 16 bit register and overflowing after
+ * 0xFFFF. Upon each overflow, an ISR is executed. With the Sub-main clock
+ * SMCLK = 16MHz this results in 244.14Hz interrupt rate = 4.096 ms periode.
+ *
+ *
  */
 
 #include <stdint.h>
@@ -27,6 +32,24 @@
 #include "menu.h"
 #include "color.h"
 #include "utils.h"
+
+int8_t RotEncValue = 0;   // will be -128 .. +127 depending on rotation speed
+uint8_t ButtonValue = 0;
+#define BV_ROTENC_NEW 0x01
+#define BV_ROTENC_OLD 0x02
+#define BV_ROTENC     0x03
+#define BV_BUTTON_NEW 0x04
+#define BV_BUTTON_OLD 0x08
+#define BV_BUTTON     0x0C
+#define BV_SHIFT      ((ButtonValue << 1) & (BV_ROTENC_OLD | BV_BUTTON_OLD))
+#define BV_ROTENC_RISE ((ButtonValue & BV_ROTENC) == (BV_ROTENC_NEW))
+#define BV_ROTENC_FALL ((ButtonValue & BV_ROTENC) == (BV_ROTENC_OLD))
+#define BV_ROTENC_EDGE (BV_ROTENC_RISE || BV_ROTENC_FALL)
+#define BV_BUTTON_RISE ((ButtonValue & BV_BUTTON) == (BV_BUTTON_NEW))
+#define BV_BUTTON_FALL ((ButtonValue & BV_BUTTON) == (BV_BUTTON_OLD))
+#define BV_BUTTON_EDGE (BV_BUTTON_RISE || BV_BUTTON_FALL)
+#define BV_EDGE ((ButtonValue & (BV_ROTENC_OLD | BV_BUTTON_OLD)) ^ BV_SHIFT)
+
 
 
 // TODO: do we need this define?
@@ -139,18 +162,38 @@ int main(void) {
     __bis_SR_register(LPM0_bits + GIE);
     // wake-up from LPM0 -> we have something to do
     // TODO
+    if (BV_ROTENC_RISE) TA0CCR1 = 0xFFFF;
+    if (BV_BUTTON_RISE) TA0CCR1 = 0x0001;
+    if (RotEncValue > 0)
+      TA0CCR1 += RotEncValue << 12;
+    else if (RotEncValue < 0)
+      TA0CCR1 -= (-RotEncValue) << 12;
   }
 
   return 0;
 }
 
-signed int Phase;
-int Dec = 0;
-int Inc = 0;
-signed int RotEncPhase;
-/*volatile uint8_t ButtonPush;
-volatile uint8_t RotEncPush;*/
+uint8_t RotEncPhase = 0;   // initialize to an invalid value so that the if/elseif structure does nothing
+int RotEncDec = 0;   // not really necessary
+int RotEncInc = 0;   // not really necessary
+uint8_t RotEncCount = 0;   // upward counter to measure time between steps for virtual acceleration
+int8_t RotEncDir = 0;      // direction of last step, to avoid acceleration on rapid changes of the rotation direction
 
+/**
+ * Translate number of counts between successive rotary encoder steps to a
+ * virtual step width.
+ */
+int8_t RotEncSpeed(uint8_t Count) {
+  if (Count > 50) {
+    return 1;
+  } else if (Count > 20) {
+    return 2;
+  } else if (Count > 10) {
+    return 3;
+  } else {
+    return 4;
+  }
+}
 
 /**
  * Periodic Timer Interrupt
@@ -159,6 +202,7 @@ volatile uint8_t RotEncPush;*/
  *  - handle PWM simulation
  *  - read rotary encoder and button -> notify main program
  *  - ramp up/down PWMs
+ *  - handle timeouts
  */
 // Timer A0 interrupt service routine for CC1 and TA interrupt
 #pragma vector = TIMER1_A1_VECTOR
@@ -173,6 +217,10 @@ __interrupt void Timer_A (void) {
   TA1CCTL2 = OUTMOD_0;
   TA1CCTL2 = OUTMOD_1;
 
+  // handle timeouts
+  // TODO
+
+/*
   // SMCLK = 16MHz
   // period of 65536 -> 244.14Hz interrupt rate = 4.096 ms periode
 
@@ -182,31 +230,49 @@ __interrupt void Timer_A (void) {
     timerCount = 0;
 
   }
+*/
 
   // read in rotary encoder
-  Phase = ROTENC_PHASE;
-  if ((RotEncPhase == 3) && (Phase == 2)) {
+  uint8_t NewPhase = ROTENC_PHASE;
+  if ((RotEncPhase == 3) && (NewPhase == 2)) {
     // clock-wise
-    Inc++;
+    RotEncInc++;
     // TODO
-  } else if ((RotEncPhase == 3) && (Phase == 1)) {
+    if (RotEncDir == 1) {
+      // Acceleration: only if rotation in the same direction
+      RotEncValue = RotEncSpeed(RotEncCount);
+    } else {
+      RotEncValue = 1;
+    }
+    RotEncDir = 1;
+    RotEncCount = 0;
+    LPM0_EXIT; // exit LPM0 when returning from ISR
+  } else if ((RotEncPhase == 3) && (NewPhase == 1)) {
     // counter-clock-wise
-    Dec++;
-    // TODO
+    RotEncDec++;
+    // tell the main program
+    if (RotEncDir == -1) {
+      // Acceleration: only if rotation in the same direction
+      RotEncValue = -RotEncSpeed(RotEncCount);
+    } else {
+      RotEncValue = -1;
+    }
+    RotEncDir = -1;
+    RotEncCount = 0;
+    LPM0_EXIT; // exit LPM0 when returning from ISR
+  } else {
+    RotEncValue = 0;
+    if (RotEncCount < 255)
+      RotEncCount++;
   }
-  RotEncPhase = Phase;
-  // TODO: handle slow/fast rotation
+  RotEncPhase = NewPhase;
 
-/*  Phase = ROTENC_PUSH;
-  int x = P1IN;
-  RotEncPush = ROTENC_PUSH;
-  ButtonPush = BUTTON_PUSH;*/
-
-  if (ROTENC_PUSH) {
-    TA0CCR1 = 0x0001;
-  } else if (BUTTON_PUSH) {
-    TA0CCR1 = 0xFFFF;
-  }
+  // read in buttons
+  ButtonValue = BV_SHIFT;
+  if (ROTENC_PUSH) ButtonValue |= BV_ROTENC_NEW;
+  if (BUTTON_PUSH) ButtonValue |= BV_BUTTON_NEW;
+  if (BV_EDGE)
+    LPM0_EXIT; // exit LPM0 when returning from ISR
 
 /*
   // when decrementing, the LED sometimes flickers, this is because the timer can overflow
