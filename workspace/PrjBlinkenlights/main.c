@@ -277,8 +277,9 @@ int main(void) {
   init_timer();
   // initialize LCD
   // TODO
-  // load data from Info Memory
-  // TODO
+  // initialize Flash controller and load data from Info Memory
+  infomem_init();
+  infomem_read();
 
   // Clear the timer and enable timer interrupt
   __enable_interrupt();
