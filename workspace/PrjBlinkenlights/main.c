@@ -1,12 +1,34 @@
 /**
  * Project Blinkenlights -- Main Program
  *
- * RGB LED strip controller with an LCD, rotary encoder with button and one
- * more button.
+ * RGB LED strip controller with an LCD, rotary encoder with push button and
+ * one more button.
+ *
+ * The device is built of the following components:
+ *  - TI MSP430 LaunchPad Rev. 1.5 with an MSP430G2553
+ *  - custom BoosterPack add-on board to host all additional electronics
+ *     - 12V RGB LED strip (via connector)
+ *     - 12V power supply
+ *     - 12V -> 5V and 5V -> 3.3V LDO
+ *     - 4x20 LCD display
+ *     - rotary encoder with push button
+ *     - additional button
  *
  * The whole function is accomplished with two parts:
  *  - int main()
  *  - timer ISR
+ *
+ * The main() has a loop which enters LPM0 at its start. Note that LPM1 saves
+ * more power by deactivating the DCO and its DC generator, but only if it is
+ * not used for SMCLK. Since we use SMCLK for the timer, LPM1 is identical to
+ * LPM0.
+ *
+ * From this low-power mode the main loop is woken up by the timer ISR, if
+ * something has to be done. All main functionality is then performed by
+ * main(). So, there are three reasons for the ISR to wakeup main():
+ *  - rotary encoder was rotated
+ *  - a button was pressed
+ *  - a timeout was reached
  *
  * The timers are additionally used to generate PWMs for the LEDs (see
  * init_timer()):
@@ -14,9 +36,61 @@
  *  - Timer A1 is used with a trick so that all three CCRs including CCR0
  *    can be used for PWMs for the RGB LED strip.
  *
- * Timer A1 is setup to count the full 16 bit register and overflowing after
+ * Timer A1 is setup to count the full 16 bit register and overflow after
  * 0xFFFF. Upon each overflow, an ISR is executed. With the Sub-main clock
  * SMCLK = 16MHz this results in 244.14Hz interrupt rate = 4.096 ms periode.
+ *
+ * Timeouts:
+ * ---------
+ * Global variables counted downward in the timer ISR. It reaching 0, the
+ * main() is notified.
+ *
+ * Rotary Encoder:
+ * ---------------
+ * The NOBLE RE0124 rotary encoder has 24 steps per 360° rotation plus a push
+ * button. The rotation causes two switches to close and therefore connect the
+ * terminals A and B to GND. The MSP430 GPIO pins used have the pull-ups
+ * activated. The two inputs are summarized by the macro ROTENC_PHASE. At the
+ * detent positions, both switches are open, so 0x03 is seen. When rotating
+ * clock-wise, first terminal A goes to 0, so 0x02 is seen. When rotating
+ * counter-clock-wise, first terminal B goes to 0, so 0x01 is seen. These two
+ * values are used to identify rotation direction.
+ *
+ * The rotation speed is identified using the upward counter variable
+ * RotEncCount in the ISR. The further this value has counted, the slower the
+ * rotation was.
+ *
+ * When the user turns the knob, the direction (and speed) is communicated to
+ * main() by setting RotEncValue to a non-zero value (positive or negative)
+ * and LPM0 is exited after the ISR, so main() can handle the user input.
+ *
+ * Buttons:
+ * --------
+ * The rotary encoder also has a push button (if the knob is pushed).
+ * Additionally, an extra button is soldered to the PCB. Both are normally
+ * open and connect the signal wire to GND when pressed. The MSP430 GPIO pins
+ * are configured to apply an internal pull-up.
+ *
+ * The current state of each button is stored as bits in the variable
+ * ButtonValue. The old state is also stored in this variable by a shift-left
+ * of the old state. Therefore a rising and falling edge can easily be
+ * detected.
+ *
+ * When the user has pressed one of these buttons, LPM0 is exited after the
+ * ISR, so main() can handle the user input.
+ *
+ * LCD Backlight Fade-In/-Out:
+ * ---------------------------
+ * All time-dependent functions like the fade-in/-out of the LCD backlight
+ * LED PWM need the help of the timer interrupt. From main() the order to
+ * fade-in/-out the PWM is communicated to the ISR via the variable
+ * LedLcdFade. Its value is added (signed!) to the variable LedLcdBacklight
+ * and saturated to 0 and 0xFFFF. Its value is then converted via a
+ * non-linear transfer function to the PWM value.
+ *
+ * Rainbow:
+ * --------
+ * TODO
  *
  *
  */
@@ -53,6 +127,9 @@ uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button va
 
 int16_t LedLcdFade;   // main() -> ISR:
 
+uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which timeout was reached
+#define TIMEOUT_LCD_BACKLIGHT    0x01
+uint16_t TimeoutLcdBacklight;
 
 // TODO: do we need this define?
 #define TIMER_DIV   (8*16)
@@ -164,12 +241,20 @@ int main(void) {
     __bis_SR_register(LPM0_bits + GIE);
     // wake-up from LPM0 -> we have something to do
     // TODO
-    if (BV_ROTENC_RISE) LedLcdFade = (65536/244)*5;
+    if (BV_ROTENC_RISE) {
+      LedLcdFade = (65536/244)*5;
+      TimeoutLcdBacklight = 244*3;  // 3 seconds
+    }
     if (BV_BUTTON_RISE) LedLcdFade = -(65536/244);
     if (RotEncValue > 0)
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
       TA0CCR1 -= (-RotEncValue) << 12;
+    if (TimeoutReached & TIMEOUT_LCD_BACKLIGHT) {
+      //
+      LedLcdFade = -(65536/244);
+      TimeoutReached &= ~TIMEOUT_LCD_BACKLIGHT;
+    }
   }
 
   return 0;
@@ -222,7 +307,13 @@ __interrupt void Timer_A (void) {
   TA1CCTL2 = OUTMOD_1;
 
   // handle timeouts
-  // TODO
+  if (TimeoutLcdBacklight) {
+    TimeoutLcdBacklight--;
+    if (TimeoutLcdBacklight == 0) {
+      TimeoutReached |= TIMEOUT_LCD_BACKLIGHT;
+      LPM0_EXIT; // exit LPM0 when returning from ISR
+    }
+  }
 
 /*
   // SMCLK = 16MHz
