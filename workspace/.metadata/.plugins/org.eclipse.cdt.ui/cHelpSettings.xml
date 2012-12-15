@@ -3,4 +3,11 @@
 <project name="blinki">
 <provider id="org.eclipse.cdt.ui.provider1"/>
 </project>
+<project name="PrjBlinkenlights">
+<provider id="org.eclipse.cdt.ui.provider1"/>
+<provider id="org.eclipse.linuxtools.cdt.libhover.provider">
+<book enabled="true" title="devhelp"/>
+<book enabled="true" title="glibc library"/>
+</provider>
+</project>
 </cHelpSettings>
