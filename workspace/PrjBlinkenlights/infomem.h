@@ -11,10 +11,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "color.h"
+
 typedef struct {
   uint8_t Version;
-  uint16_t Word1;
-  uint16_t Word2;
+  TColor RGB;
+  TColor HSV;
 } TPersistent;  // attribute "packed" seems not to be supported :-(
 
 extern TPersistent PersistentRam;

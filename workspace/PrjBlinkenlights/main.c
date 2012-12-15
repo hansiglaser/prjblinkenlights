@@ -155,6 +155,10 @@
 #include "color.h"
 #include "utils.h"
 
+/****************************************************************************
+ **** Global Variables ******************************************************
+ ****************************************************************************/
+
 int8_t RotEncValue = 0;   // ISR -> main(): will be -128 .. +127 depending on rotation speed
 
 uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button value
@@ -183,6 +187,10 @@ uint16_t TimeoutLcdBacklight;
 #define TIMER_DIV   (8*16)
 // TODO: if no define is needed, move this variable directly above the ISR
 unsigned int timerCount = 0;
+
+/****************************************************************************
+ **** Initialization ********************************************************
+ ****************************************************************************/
 
 /**
  * Setup clock generation unit DCO to 16 MHz
@@ -260,6 +268,94 @@ void init_timer() {
   TA1CCR1  = 0x0000;                    // CCR1 PWM duty cycle default value
   TA1CCR2  = 0x0000;                    // CCR2 PWM duty cycle default value
 }
+
+/****************************************************************************
+ **** Functions *************************************************************
+ ****************************************************************************/
+
+int cbColorTemperature(int Delta, void* Data) {
+  // TODO: either as list or as values with varying step size
+}
+
+void cbRGB() {
+  // TODO: update HSV values
+  // TODO: update PWM
+}
+
+void cbHSV() {
+  // TODO: update RGB values
+  // TODO: update PWM
+}
+
+void cbRainbow() {
+  // TODO: update rainbow parameters
+}
+
+void cbSetUserColor(void* Data) {
+  // TODO: user color
+}
+
+/****************************************************************************
+ **** Menu ******************************************************************
+ ****************************************************************************/
+
+const TMenuEntry MenuWhite[] = {
+  {.Type = metNumber, .Label = "Helligkeit",    .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0 } },
+  {.Type = metNumber, .Label = "Farbtemp.",     .NumberData  = {.Unit = 'K', .CBValue = 0, .CBData = 0 } },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0}}
+};
+
+const TMenuEntry MenuRGB[] = {
+  {.Type = metNumber, .Label = "Rot",           .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Grün",          .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Blau",          .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0}}
+};
+
+const TMenuEntry MenuHSV[] = {
+  {.Type = metNumber, .Label = "H: Farbton",    .NumberData  = {.Unit = 'X', .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "S: Saettigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "V: Helligkeit", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0}}
+};
+
+const TMenuEntry MenuRainbow[] = {
+  {.Type = metNumber, .Label = "Geschwindigk.", .NumberData  = {.Unit = '%', .CBValue = 0/*TODO*/, .CBData = cbRainbow } },
+  {.Type = metNumber, .Label = "S: Saettigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "V: Helligkeit", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0}}
+};
+
+const TMenuEntry MenuSaveUserColor[] = {
+  {.Type = metString, .Label = "Name",          .StringData  = {.String = 0/*TODO*/, .Length = 0 } },
+  {.Type = metSimple, .Label = "Speichern",     .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0} },
+};
+
+TMenuEntry MenuUserColors[] = {
+  {.Type = metSimple, .Label = "Farbe 1",       .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 2",       .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 3",       .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 4",       .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSubmenu,.Label = "Speichern",     .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuSaveUserColor} },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0} },
+};
+
+const TMenuEntry MenuConfig[] = {
+  {.Type = metNumber, .Label = "Geschwindigk.", .NumberData  = {.Unit = '%', .CBValue = 0, .CBData = 0 } },
+  {.Type = metSimple, .Label = "Zurück",        .SimpleData  = {.Callback = 0, .CBData = 0}}
+};
+
+const TMenuEntry MainMenu[] = {
+  {.Type = metSimple, .Label = "Aus",           .SimpleData  = {.Callback = 0, .CBData = 0}},
+  {.Type = metSubmenu,.Label = "Weiss",         .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite} },
+  {.Type = metSubmenu,.Label = "RGB",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB} },
+  {.Type = metSubmenu,.Label = "HSV",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV} },
+  {.Type = metSubmenu,.Label = "Regenbogen",    .SubMenuData = {.NumEntries = 2, .SubMenu = &MenuRainbow} },
+  {.Type = metSubmenu,.Label = "Eigene Farben", .SubMenuData = {.NumEntries = 2, .SubMenu = &MenuUserColors} },
+  {.Type = metSubmenu,.Label = "Konfiguration", .SubMenuData = {.NumEntries = 2, .SubMenu = &MenuConfig} },
+
+};
 
 /****************************************************************************
  **** Main Program **********************************************************
