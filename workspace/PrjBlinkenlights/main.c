@@ -33,8 +33,9 @@
 #include "color.h"
 #include "utils.h"
 
-int8_t RotEncValue = 0;   // will be -128 .. +127 depending on rotation speed
-uint8_t ButtonValue = 0;
+int8_t RotEncValue = 0;   // ISR -> main(): will be -128 .. +127 depending on rotation speed
+
+uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new button value
 #define BV_ROTENC_NEW 0x01
 #define BV_ROTENC_OLD 0x02
 #define BV_ROTENC     0x03
@@ -50,6 +51,7 @@ uint8_t ButtonValue = 0;
 #define BV_BUTTON_EDGE (BV_BUTTON_RISE || BV_BUTTON_FALL)
 #define BV_EDGE ((ButtonValue & (BV_ROTENC_OLD | BV_BUTTON_OLD)) ^ BV_SHIFT)
 
+int16_t LedLcdFade;   // main() -> ISR:
 
 
 // TODO: do we need this define?
@@ -162,8 +164,8 @@ int main(void) {
     __bis_SR_register(LPM0_bits + GIE);
     // wake-up from LPM0 -> we have something to do
     // TODO
-    if (BV_ROTENC_RISE) TA0CCR1 = 0xFFFF;
-    if (BV_BUTTON_RISE) TA0CCR1 = 0x0001;
+    if (BV_ROTENC_RISE) LedLcdFade = (65536/244)/5;
+    if (BV_BUTTON_RISE) LedLcdFade = -(65536/244)/5;
     if (RotEncValue > 0)
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
@@ -274,6 +276,28 @@ __interrupt void Timer_A (void) {
   if (BV_EDGE)
     LPM0_EXIT; // exit LPM0 when returning from ISR
 
+  if (LedLcdFade != 0) {
+    if (LedLcdFade > 0) {
+      // fade-in
+      if (TA0CCR1 < (0xFFFF - LedLcdFade)) {
+        TA0CCR1 += LedLcdFade;
+      } else {
+        // completely on, done
+        TA0CCR1 = 0xFFFF;
+        LedLcdFade = 0;
+      }
+    } else {  // LedLcdFade < 0
+      // fade-out
+      // when decrementing, the LED sometimes flickers, this is because the timer can overflow
+      if (TA0CCR1 > -LedLcdFade) {
+        TA0CCR1 += LedLcdFade;
+      } else {
+        // completely off, done
+        TA0CCR1 = 0;
+        LedLcdFade = 0;
+      }
+    }
+  }
 /*
   // when decrementing, the LED sometimes flickers, this is because the timer can overflow
   TA0CCR1  // LCD backlight
