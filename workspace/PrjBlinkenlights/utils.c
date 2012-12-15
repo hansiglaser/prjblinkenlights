@@ -35,6 +35,15 @@ typedef union {
  * value above 4 is incremented by 3. Therefore 5 (left-shifted equals 10)
  * is increased to 8 (left-shifted equals 16), and thus leading to a proper
  * carry to the next BCD digit.
+ *
+ * Optimizations which could be added:
+ *  - Incrementing the most significant BCD digit by 3 is not necessary,
+ *    because its maximum value 9 (after the last shift-left) was 4, therefore
+ *    this never happens
+ *  - Of the 16 loop iterations, the first two can be omitted, if the
+ *    assignment of the original integer value is left-shifted by
+ *    two. This is because 9999 decimal = 0x270F, which doesn't use the two
+ *    MSBs.
  */
 uint16_t Int2BCD(uint16_t i) {
   TInt2BCDHelper Scratch;
