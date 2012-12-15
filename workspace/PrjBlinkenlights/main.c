@@ -33,8 +33,26 @@
  * The timers are additionally used to generate PWMs for the LEDs (see
  * init_timer()):
  *  - Timer A0 is used with CCR1 to generate a PWM for the LCD backlight.
- *  - Timer A1 is used with a trick so that all three CCRs including CCR0
- *    can be used for PWMs for the RGB LED strip.
+ *  - Timer A1 is used with all three CCRs including CCR0 to generate PWMs for the RGB LED strip.
+ *
+ * A trick is necessary to use CCR0, CCR1 and CCR2 for PWM, because the
+ * Reset/Set mode is not available for CCR0. Therefore we use the Set output
+ * mode with the timer in continuous mode. The outputs are reset in the timer
+ * overflow ISR (which is a bit tricky, though).
+ *
+ * Note that this reverses the PWM value, because the output is LOW from
+ * 0..CCRx and high from CCRx..0xFFFF.
+ *
+ * MSP430G2231:
+ *  - TA0.0 is available on P1.1, P1.5
+ *  - TA0.1 is available on P1.2, P1.6, P2.6
+ * MSP430G2553:
+ *  - TA0.0 is available on P1.1, P1.5
+ *  - TA0.1 is available on P1.2, P1.6, P2.6
+ *  - TA0.2 is available on P3.0. P3.6        // damn, only available with 28-pin devices!
+ *  - TA1.0 is available on P2.0. P2.3, P3.1
+ *  - TA1.1 is available on P2.1, P2.2, P3.2
+ *  - TA1.2 is available on P2.4, P2.5, P3.3
  *
  * Timer A1 is setup to count the full 16 bit register and overflow after
  * 0xFFFF. Upon each overflow, an ISR is executed. With the Sub-main clock
@@ -50,7 +68,37 @@
  * The NOBLE RE0124 rotary encoder has 24 steps per 360° rotation plus a push
  * button. The rotation causes two switches to close and therefore connect the
  * terminals A and B to GND. The MSP430 GPIO pins used have the pull-ups
- * activated. The two inputs are summarized by the macro ROTENC_PHASE. At the
+ * activated.
+ *
+ *     P         P
+ * +--| |-------| |--+
+ * |                 |
+ * |                 |
+ * |      -----      |
+ * |     /     \     |
+ * |    |   *   |    |
+ * |     \     /     |
+ * |      -----      |
+ * |                 |
+ * |                 |
+ * +--| |--| |--| |--+
+ *     A    C    B
+ *
+ * P-P is closed when the button us pressed
+ *
+ *
+ * A-C  Off ----+     +-----+     +----
+ *              |     |     |     |
+ *      On      +-----+     +-----+
+ *
+ * B-C  Off  +-----+     +-----+     +-
+ *           |     |     |     |     |
+ *      On  -+     +-----+     +-----+
+ *
+ *           ^           ^           ^
+ *           +-----------+-----------+-- detent position
+ *
+ * The two inputs A and B are summarized by the macro ROTENC_PHASE. At the
  * detent positions, both switches are open, so 0x03 is seen. When rotating
  * clock-wise, first terminal A goes to 0, so 0x02 is seen. When rotating
  * counter-clock-wise, first terminal B goes to 0, so 0x01 is seen. These two
