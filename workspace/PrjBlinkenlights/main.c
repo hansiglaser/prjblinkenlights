@@ -416,6 +416,10 @@ int main(void) {
   return 0;
 }
 
+/****************************************************************************
+ **** Timer ISR *************************************************************
+ ****************************************************************************/
+
 uint8_t RotEncPhase = 0;   // initialize to an invalid value so that the if/elseif structure does nothing
 int RotEncDec = 0;   // not really necessary
 int RotEncInc = 0;   // not really necessary
@@ -454,7 +458,7 @@ int8_t RotEncSpeed(uint8_t Count) {
 __interrupt void Timer_A (void) {
   TA1CTL &= ~TAIFG;              // clear TAIFG (seems necessary!)
 
-  // change output mode to reset the output signal
+  // change output mode to reset the output signal ///////////////////////////
   TA1CCTL0 = OUTMOD_0;
   TA1CCTL0 = OUTMOD_1;
   TA1CCTL1 = OUTMOD_0;
@@ -462,7 +466,7 @@ __interrupt void Timer_A (void) {
   TA1CCTL2 = OUTMOD_0;
   TA1CCTL2 = OUTMOD_1;
 
-  // handle timeouts
+  // handle timeouts /////////////////////////////////////////////////////////
   if (TimeoutLcdBacklight) {
     TimeoutLcdBacklight--;
     if (TimeoutLcdBacklight == 0) {
@@ -483,12 +487,12 @@ __interrupt void Timer_A (void) {
   }
 */
 
-  // read in rotary encoder
+  // read in rotary encoder //////////////////////////////////////////////////
   uint8_t NewPhase = ROTENC_PHASE;
   if ((RotEncPhase == 3) && (NewPhase == 2)) {
     // clock-wise
     RotEncInc++;
-    // TODO
+    // tell the main program
     if (RotEncDir == 1) {
       // Acceleration: only if rotation in the same direction
       RotEncValue = RotEncSpeed(RotEncCount);
@@ -518,13 +522,14 @@ __interrupt void Timer_A (void) {
   }
   RotEncPhase = NewPhase;
 
-  // read in buttons
+  // read in buttons /////////////////////////////////////////////////////////
   ButtonValue = BV_SHIFT;
   if (ROTENC_PUSH) ButtonValue |= BV_ROTENC_NEW;
   if (BUTTON_PUSH) ButtonValue |= BV_BUTTON_NEW;
   if (BV_EDGE)
     LPM0_EXIT; // exit LPM0 when returning from ISR
 
+  // LCD backlight fade-in/out ///////////////////////////////////////////////
   if (LedLcdFade != 0) {
     if (LedLcdFade > 0) {
       // fade-in
