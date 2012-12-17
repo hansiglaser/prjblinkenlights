@@ -177,11 +177,27 @@ volatile uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new 
 #define BV_BUTTON_EDGE (BV_BUTTON_RISE || BV_BUTTON_FALL)
 #define BV_EDGE ((ButtonValue & (BV_ROTENC_OLD | BV_BUTTON_OLD)) ^ BV_SHIFT)
 
-volatile int16_t LedLcdFade;   // main() -> ISR:
-
 volatile uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which timeout was reached
 #define TIMEOUT_LCD_BACKLIGHT    0x01
 volatile uint16_t TimeoutLcdBacklight;
+
+volatile uint8_t Semaphores = 0;  // main() -> ISR
+#define SEM_PWM_LCD      0x01     // new value for LCD backlight
+#define SEM_PWM_RGB      0x02     // new values for RGB LED strip
+#define SEM_LCD_FADE_IN  0x04     // leave LPM0 after ISR, so that main() can calculate LCD backlight fade-in
+#define SEM_LCD_FADE_OUT 0x08     // leave LPM0 after ISR, so that main() can calculate LCD backlight fade-in
+#define SEM_RAINBOW      0x10     // leave LPM0 after ISR, so that main() can calculate rainbow colors
+#define SEM_PERIODIC     (SEM_LCD_FADE_IN | SEM_LCD_FADE_OUT | SEM_RAINBOW)
+// note: these SEM_PERIODIC semaphores are not reset by the ISR, because they
+// are used by main() so it knows it is performing an ongoing task
+
+volatile uint16_t PWMLCD;       // PWM comparison value written to TA0CCR1
+volatile uint16_t PWMRGBRed;    // PWM comparison value written to TA1CCR0
+volatile uint16_t PWMRGBGreen;  // PWM comparison value written to TA1CCR1
+volatile uint16_t PWMRGBBlue;   // PWM comparison value written to TA1CCR2
+
+#define LCD_FADE_IN_STEP     (65536/244)*5   // 1/5 = 0.2s
+#define LCD_FADE_OUT_STEP    (65536/244)/2   // 2s
 
 // TODO: do we need this define?
 #define TIMER_DIV   (8*16)
@@ -364,6 +380,7 @@ const TMenuEntry MainMenu[] = {
 
 int main(void) {
   TMenuState MenuState;
+  uint16_t LedLcdBacklight = 0;
 
   // Stop watchdog timer
   WDTCTL = WDTPW + WDTHOLD;
@@ -391,26 +408,56 @@ int main(void) {
     // LPM0 with interrupts enabled
     __bis_SR_register(LPM0_bits + GIE);
     // wake-up from LPM0 -> we have something to do
-    // menu handling
+
+    // menu handling /////////////////////////////////////////////////////////
     if      (BV_ROTENC_RISE)   menu_handle_event(&MenuState, mePress,  0);
     else if (BV_BUTTON_RISE)   menu_handle_event(&MenuState, meBack,   0);
     else if (RotEncValue != 0) menu_handle_event(&MenuState, meRotate, RotEncValue);
 
-    // TODO
+    // TODO: remove //////////////////////////////////////////////////////////
     if (BV_ROTENC_RISE) {
-      LedLcdFade = (65536/244)*5;
+      Semaphores |= SEM_LCD_FADE_IN;
       TimeoutLcdBacklight = 244*3;  // 3 seconds
     }
-    if (BV_BUTTON_RISE) LedLcdFade = -(65536/244);
+    if (BV_BUTTON_RISE) Semaphores |= SEM_LCD_FADE_OUT;
     if (RotEncValue > 0)
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
       TA0CCR1 -= (-RotEncValue) << 12;
     if (TimeoutReached & TIMEOUT_LCD_BACKLIGHT) {
       //
-      LedLcdFade = -(65536/244);
+      Semaphores |= SEM_LCD_FADE_OUT;
       TimeoutReached &= ~TIMEOUT_LCD_BACKLIGHT;
     }
+
+    // LCD backlight fade-in/out ///////////////////////////////////////////////
+    if (Semaphores & SEM_LCD_FADE_IN) {
+      // fade-in
+      if (LedLcdBacklight < (0xFFFF - LCD_FADE_IN_STEP)) {
+        LedLcdBacklight += LCD_FADE_IN_STEP;
+      } else {
+        // completely on, done
+        LedLcdBacklight = 0xFFFF;
+        Semaphores &= ~SEM_LCD_FADE_IN;
+      }
+      PWMLCD = Brightness2PWM(LedLcdBacklight);
+      Semaphores |= SEM_PWM_LCD;  // notify ISR to update timer comparison register
+    } else if (Semaphores & SEM_LCD_FADE_OUT) {
+      // fade-out
+      // when decrementing, the LED sometimes flickers, this is because the timer can overflow
+      if (LedLcdBacklight > -LCD_FADE_OUT_STEP) {
+        LedLcdBacklight += LCD_FADE_OUT_STEP;
+      } else {
+        // completely off, done
+        LedLcdBacklight = 0;
+        Semaphores &= ~SEM_LCD_FADE_OUT;
+      }
+      PWMLCD = Brightness2PWM(LedLcdBacklight);
+      Semaphores |= SEM_PWM_LCD;  // notify ISR to update timer comparison register
+    }
+
+    // Rainbow ///////////////////////////////////////////////////////////////
+    // TODO
   }
 
   return 0;
@@ -425,8 +472,6 @@ int RotEncDec = 0;   // not really necessary
 int RotEncInc = 0;   // not really necessary
 uint8_t RotEncCount = 0;   // upward counter to measure time between steps for virtual acceleration
 int8_t RotEncDir = 0;      // direction of last step, to avoid acceleration on rapid changes of the rotation direction
-
-uint16_t LedLcdBacklight = 0;
 
 /**
  * Translate number of counts between successive rotary encoder steps to a
@@ -465,6 +510,19 @@ __interrupt void Timer_A (void) {
   TA1CCTL1 = OUTMOD_1;
   TA1CCTL2 = OUTMOD_0;
   TA1CCTL2 = OUTMOD_1;
+
+  // set new PWM values //////////////////////////////////////////////////////
+  if (Semaphores & SEM_PWM_LCD) {
+    TA0CCR1 = PWMLCD;          // LCD backlight
+    Semaphores &= ~SEM_PWM_LCD;
+  }
+  if (Semaphores & SEM_PWM_RGB) {
+    TA1CCR0 = PWMRGBRed;       // red
+    TA1CCR1 = PWMRGBGreen;     // green
+    TA1CCR2 = PWMRGBBlue;      // blue
+    Semaphores &= ~SEM_PWM_RGB;
+  }
+  // when decrementing, the LED sometimes flickers, this is because the timer can overflow
 
   // handle timeouts /////////////////////////////////////////////////////////
   if (TimeoutLcdBacklight) {
@@ -529,38 +587,9 @@ __interrupt void Timer_A (void) {
   if (BV_EDGE)
     LPM0_EXIT; // exit LPM0 when returning from ISR
 
-  // LCD backlight fade-in/out ///////////////////////////////////////////////
-  if (LedLcdFade != 0) {
-    if (LedLcdFade > 0) {
-      // fade-in
-      if (LedLcdBacklight < (0xFFFF - LedLcdFade)) {
-        LedLcdBacklight += LedLcdFade;
-      } else {
-        // completely on, done
-        LedLcdBacklight = 0xFFFF;
-        LedLcdFade = 0;
-      }
-    } else {  // LedLcdFade < 0
-      // fade-out
-      // when decrementing, the LED sometimes flickers, this is because the timer can overflow
-      if (LedLcdBacklight > -LedLcdFade) {
-        LedLcdBacklight += LedLcdFade;
-      } else {
-        // completely off, done
-        LedLcdBacklight = 0;
-        LedLcdFade = 0;
-      }
-    }
-    TA0CCR1 = Brightness2PWM(LedLcdBacklight);
+  // periodic wakeup semaphore ///////////////////////////////////////////////
+  if (Semaphores & SEM_PERIODIC) {
+    LPM0_EXIT; // exit LPM0 when returning from ISR
+    // not reset by ISR!
   }
-/*
-  // when decrementing, the LED sometimes flickers, this is because the timer can overflow
-  TA0CCR1  // LCD backlight
-  TA1CCR0  // red
-  TA1CCR1  // green
-  TA1CCR2  // blue
-*/
-/*
-  LPM0_EXIT; // exit LPM0 when returning from ISR
-*/
 }
