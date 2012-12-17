@@ -426,6 +426,7 @@ int main(void) {
     else if (BV_BUTTON_RISE)   menu_handle_event(&MenuState, meBack,   0);
     else if (RotEncValue != 0) menu_handle_event(&MenuState, meRotate, RotEncValue);
     else UserAction = false;
+    // fade-in LCD backlight on user action
     if (UserAction) {
       TimeoutLcdBacklight = TIMEOUT_LCD_BACKLIGHT;  // reset timeout
       // fade-in LCD backlight, 3 cases: on, fade-in, fade-out
@@ -433,6 +434,12 @@ int main(void) {
         Semaphores &= ~SEM_LCD_FADE_OUT;
         Semaphores |=  SEM_LCD_FADE_IN;
       }
+    }
+    // fade-out LCD backlight after timeout
+    if (TimeoutReached & TIMEOUT_REACHED_LCD_BACKLIGHT) {
+      //
+      Semaphores |= SEM_LCD_FADE_OUT;
+      TimeoutReached &= ~TIMEOUT_REACHED_LCD_BACKLIGHT;
     }
 
     // TODO: remove //////////////////////////////////////////////////////////
@@ -445,11 +452,6 @@ int main(void) {
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
       TA0CCR1 -= (-RotEncValue) << 12;
-    if (TimeoutReached & TIMEOUT_REACHED_LCD_BACKLIGHT) {
-      //
-      Semaphores |= SEM_LCD_FADE_OUT;
-      TimeoutReached &= ~TIMEOUT_REACHED_LCD_BACKLIGHT;
-    }
 
     // LCD backlight fade-in/out ///////////////////////////////////////////////
     if (Semaphores & SEM_LCD_FADE_IN) {
