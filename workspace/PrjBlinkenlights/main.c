@@ -28,6 +28,7 @@
  * main(). So, there are three reasons for the ISR to wakeup main():
  *  - rotary encoder was rotated
  *  - a button was pressed
+ *  - main() asked for it using a semaphore
  *  - a timeout was reached
  *
  * The timers are additionally used to generate PWMs for the LEDs (see
@@ -127,13 +128,20 @@
  * When the user has pressed one of these buttons, LPM0 is exited after the
  * ISR, so main() can handle the user input.
  *
+ * Time-dependent Functions:
+ * -------------------------
+ * All time-dependent functions (like the fade-in/-out of the LCD backlight
+ * LED PWM) need the help of the timer interrupt. Some semaphores are used to
+ * ask the ISR to exit LPM0 after its execution. In main() the timed operation
+ * is then performed.
+ *
  * LCD Backlight Fade-In/-Out:
  * ---------------------------
- * All time-dependent functions like the fade-in/-out of the LCD backlight
- * LED PWM need the help of the timer interrupt. From main() the order to
- * fade-in/-out the PWM is communicated to the ISR via the variable
- * LedLcdFade. Its value is added (signed!) to the variable LedLcdBacklight
- * and saturated to 0 and 0xFFFF. Its value is then converted via a
+ * The semaphores SEM_LCD_FADE_IN/_OUT are used so that the timer interrupt
+ * exits LPM0 after execution. In main(), the corresponding semaphore is used
+ * to determin whetner fade-in or -out is requested. In either case, the
+ * constants LCD_FADE_IN_STEP/LCD_FADE_OUT_STEP are added/subtracted to the
+ * current value of LedLcdBacklight. Its value is then converted via a
  * non-linear transfer function to the PWM value.
  *
  * Rainbow:
@@ -445,8 +453,8 @@ int main(void) {
     } else if (Semaphores & SEM_LCD_FADE_OUT) {
       // fade-out
       // when decrementing, the LED sometimes flickers, this is because the timer can overflow
-      if (LedLcdBacklight > -LCD_FADE_OUT_STEP) {
-        LedLcdBacklight += LCD_FADE_OUT_STEP;
+      if (LedLcdBacklight > LCD_FADE_OUT_STEP) {
+        LedLcdBacklight -= LCD_FADE_OUT_STEP;
       } else {
         // completely off, done
         LedLcdBacklight = 0;
