@@ -186,8 +186,10 @@ volatile uint8_t ButtonValue = 0;  // ISR -> main(): bit field with old and new 
 #define BV_EDGE ((ButtonValue & (BV_ROTENC_OLD | BV_BUTTON_OLD)) ^ BV_SHIFT)
 
 volatile uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which timeout was reached
-#define TIMEOUT_LCD_BACKLIGHT    0x01
+#define TIMEOUT_REACHED_LCD_BACKLIGHT    0x01
 volatile uint16_t TimeoutLcdBacklight;
+
+#define TIMEOUT_LCD_BACKLIGHT    244*3    // 3 seconds
 
 volatile uint8_t Semaphores = 0;  // main() -> ISR
 #define SEM_PWM_LCD      0x01     // new value for LCD backlight
@@ -389,6 +391,7 @@ const TMenuEntry MainMenu[] = {
 int main(void) {
   TMenuState MenuState;
   uint16_t LedLcdBacklight = 0;
+  bool UserAction;
 
   // Stop watchdog timer
   WDTCTL = WDTPW + WDTHOLD;
@@ -418,24 +421,34 @@ int main(void) {
     // wake-up from LPM0 -> we have something to do
 
     // menu handling /////////////////////////////////////////////////////////
+    UserAction = true;
     if      (BV_ROTENC_RISE)   menu_handle_event(&MenuState, mePress,  0);
     else if (BV_BUTTON_RISE)   menu_handle_event(&MenuState, meBack,   0);
     else if (RotEncValue != 0) menu_handle_event(&MenuState, meRotate, RotEncValue);
+    else UserAction = false;
+    if (UserAction) {
+      TimeoutLcdBacklight = TIMEOUT_LCD_BACKLIGHT;  // reset timeout
+      // fade-in LCD backlight, 3 cases: on, fade-in, fade-out
+      if ((LedLcdBacklight != 0xFFFF) && !(Semaphores & SEM_LCD_FADE_IN)) {
+        Semaphores &= ~SEM_LCD_FADE_OUT;
+        Semaphores |=  SEM_LCD_FADE_IN;
+      }
+    }
 
     // TODO: remove //////////////////////////////////////////////////////////
     if (BV_ROTENC_RISE) {
       Semaphores |= SEM_LCD_FADE_IN;
-      TimeoutLcdBacklight = 244*3;  // 3 seconds
+      TimeoutLcdBacklight = TIMEOUT_LCD_BACKLIGHT;  // 3 seconds
     }
     if (BV_BUTTON_RISE) Semaphores |= SEM_LCD_FADE_OUT;
     if (RotEncValue > 0)
       TA0CCR1 += RotEncValue << 12;
     else if (RotEncValue < 0)
       TA0CCR1 -= (-RotEncValue) << 12;
-    if (TimeoutReached & TIMEOUT_LCD_BACKLIGHT) {
+    if (TimeoutReached & TIMEOUT_REACHED_LCD_BACKLIGHT) {
       //
       Semaphores |= SEM_LCD_FADE_OUT;
-      TimeoutReached &= ~TIMEOUT_LCD_BACKLIGHT;
+      TimeoutReached &= ~TIMEOUT_REACHED_LCD_BACKLIGHT;
     }
 
     // LCD backlight fade-in/out ///////////////////////////////////////////////
@@ -536,7 +549,7 @@ __interrupt void Timer_A (void) {
   if (TimeoutLcdBacklight) {
     TimeoutLcdBacklight--;
     if (TimeoutLcdBacklight == 0) {
-      TimeoutReached |= TIMEOUT_LCD_BACKLIGHT;
+      TimeoutReached |= TIMEOUT_REACHED_LCD_BACKLIGHT;
       LPM0_EXIT; // exit LPM0 when returning from ISR
     }
   }
