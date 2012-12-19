@@ -51,6 +51,8 @@
 #define LCD_DATA_OUT  P2OUT
 #define LCD_DATA_IN   P2IN
 #define LCD_DATA_DIR  P2DIR
+#define LCD_DATA_SEL  P2SEL
+
 
 /*
  * Buttons

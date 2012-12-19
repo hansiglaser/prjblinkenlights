@@ -12,4 +12,6 @@
 
 uint16_t Int2BCD(uint16_t i);
 
+void delay_ms(int ms);
+
 #endif /* UTILS_H_ */

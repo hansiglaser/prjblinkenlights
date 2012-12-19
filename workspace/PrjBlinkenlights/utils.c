@@ -75,3 +75,14 @@ void Int2Str(int i, char* s) {
     i = i >> 4;
   } while (i > 0);
 }
+
+/**
+ * TODO: calibrate
+ */
+void delay_ms(int ms) {
+  int i;
+  while (ms > 0) {
+    for(i=0; i < 1600*2; i++);
+    ms--;
+  }
+}

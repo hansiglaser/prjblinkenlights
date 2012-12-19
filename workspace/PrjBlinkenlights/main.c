@@ -240,6 +240,7 @@ void init_io() {
   // LCD control and data signals are outputs
   LCD_CTRL_DIR |= LCD_CTRL;
   LCD_DATA_DIR |= LCD_DATA;
+  LCD_DATA_SEL &= ~LCD_DATA;   // P2.6 and P2.7 are configured for XIN/XOUT after reset
 
   // rotary encoder signals are inputs and use pull-ups
   ROTENC_DIR &= ~ROTENC_ALL;   // set as input
@@ -403,7 +404,7 @@ int main(void) {
   // setup timer
   init_timer();
   // initialize LCD
-  // TODO
+  LCDInit();
   // initialize menu
   menu_init(MainMenu,7,&MenuState);
   menu_draw(&MenuState);
@@ -441,17 +442,6 @@ int main(void) {
       Semaphores |= SEM_LCD_FADE_OUT;
       TimeoutReached &= ~TIMEOUT_REACHED_LCD_BACKLIGHT;
     }
-
-    // TODO: remove //////////////////////////////////////////////////////////
-    if (BV_ROTENC_RISE) {
-      Semaphores |= SEM_LCD_FADE_IN;
-      TimeoutLcdBacklight = TIMEOUT_LCD_BACKLIGHT;  // 3 seconds
-    }
-    if (BV_BUTTON_RISE) Semaphores |= SEM_LCD_FADE_OUT;
-    if (RotEncValue > 0)
-      TA0CCR1 += RotEncValue << 12;
-    else if (RotEncValue < 0)
-      TA0CCR1 -= (-RotEncValue) << 12;
 
     // LCD backlight fade-in/out ///////////////////////////////////////////////
     if (Semaphores & SEM_LCD_FADE_IN) {

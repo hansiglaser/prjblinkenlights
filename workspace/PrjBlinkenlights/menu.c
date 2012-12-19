@@ -6,6 +6,7 @@
  */
 
 #include "menu.h"
+#include "lcd.h"
 
 /****************************************************************************
  **** Stock Callback Functions **********************************************
@@ -52,7 +53,7 @@ void menu_init(const TMenuEntry* Main, int Count, TMenuState* State) {
 }
 
 void menu_draw_entry(const TMenuEntry* Entry) {
-// TODO:  lcd_print(Entry->Label);
+  LCDWriteString(Entry->Label);
   switch (Entry->Type) {
   case metSimple:
     // TODO
@@ -72,21 +73,33 @@ void menu_draw_entry(const TMenuEntry* Entry) {
   }
 }
 
+void menu_mark_entry(int MarkRow) {
+  int Row;
+  for (Row = 0; Row < MENU_NUM_ROWS; Row++) {
+    LCDGotoXY(0,Row);
+    LCDWrite(LCD_RS,(Row == MarkRow ? '>' : ' '));
+  }
+}
+
 void menu_draw(const TMenuState* State) {
   const TSubmenuState* SubState = State->MenuStack + State->MenuStackIndex;
   const TMenuEntry* Menu  = SubState->Menu;
   int Row;
 
+  LCDClearScreen();
   for (Row = 0; Row < MENU_NUM_ROWS; Row++) {
-    const TMenuEntry* Entry = Menu + Row;
-    // TODO: lcd_gotoxy(0,Row);
-    menu_draw_entry(Entry);
+    if (SubState->First + Row < SubState->Count) {
+      const TMenuEntry* Entry = Menu + SubState->First + Row;
+      LCDGotoXY(1,Row);
+      menu_draw_entry(Entry);
+    }
   }
 
   // TODO: draw scroll bar
 
-  // TODO: mark current menu entry (e.g. with cursor)
-
+  // mark current menu entry (e.g. with cursor)
+  LCDGotoXY(0,SubState->Item - SubState->First);
+  LCDWrite(LCD_RS,'>');
 }
 
 void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
@@ -138,21 +151,23 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
       menu_draw(State);
       break;
     case meRotate:
-      if ((Rotate > 0) && (SubState->Item > 0)) {
+      if ((Rotate < 0) && (SubState->Item > 0)) {
         SubState->Item--;
         if (SubState->First > SubState->Item) {
           SubState->First = SubState->Item;
           menu_draw(State);
         } else {
-          // TODO: shift marker of current menu entry
+          // shift marker of current menu entry
+          menu_mark_entry(SubState->Item - SubState->First);
         }
-      } else if ((Rotate < 0) && (SubState->Item < SubState->Count-1)) {
+      } else if ((Rotate > 0) && (SubState->Item < SubState->Count-1)) {
         SubState->Item++;
-        if (SubState->First+MENU_NUM_ROWS < SubState->Item) {
-          SubState->First = SubState->Item-MENU_NUM_ROWS;
+        if (SubState->Item >= SubState->First+MENU_NUM_ROWS) {
+          SubState->First = SubState->Item-MENU_NUM_ROWS+1;
           menu_draw(State);
         } else {
-          // TODO: shift marker of current menu entry
+          // shift marker of current menu entry
+          menu_mark_entry(SubState->Item - SubState->First);
         }
       }
       break;
