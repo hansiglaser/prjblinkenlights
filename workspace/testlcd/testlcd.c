@@ -27,13 +27,8 @@
  *
  */
 
-#include <msp430g2231.h>
+#include <msp430g2553.h>
 #include <stdint.h>
-
-#define LED_R 0x01
-#define LED_G 0x40
-#define LEDS  (LED_R | LED_G)
-
 
 #define LCD_RS        0x01   // P1.0
 #define LCD_RW        0x02   // P1.1
@@ -53,6 +48,11 @@
 #define LCD_DATA_OUT  P2OUT
 #define LCD_DATA_IN   P2IN
 #define LCD_DATA_DIR  P2DIR
+#define LCD_DATA_SEL  P2SEL
+
+#define LED_LCD       0x40   // P1.6
+#define LED_LCD_OUT   P1OUT
+#define LED_LCD_DIR   P1DIR
 
 
 /*
@@ -86,14 +86,14 @@
 
 #define LCD_ENTRY_MODE_SHIFT     0x01   // shift the LCD on new characters
 #define LCD_ENTRY_MODE_FIXED     0x00   // don't shift the LCD
-#define LCD_ENTRY_MODE_INC       0x01   // increment address counter on new characters
+#define LCD_ENTRY_MODE_INC       0x02   // increment address counter on new characters
 #define LCD_ENTRY_MODE_DEC       0x00   // decrement address counter
 
-#define LCD_DISPLAY_CONTROL_DISPLAY_ON   0x01
+#define LCD_DISPLAY_CONTROL_DISPLAY_ON   0x04
 #define LCD_DISPLAY_CONTROL_DISPLAY_OFF  0x00
 #define LCD_DISPLAY_CONTROL_CURSOR_ON    0x02
 #define LCD_DISPLAY_CONTROL_CURSOR_OFF   0x00
-#define LCD_DISPLAY_CONTROL_BLINK_ON     0x04
+#define LCD_DISPLAY_CONTROL_BLINK_ON     0x01
 #define LCD_DISPLAY_CONTROL_BLINK_OFF    0x00
 
 #define LCD_SHIFT_CURSOR_LEFT    0x00
@@ -189,25 +189,41 @@ uint8_t LCDRead(uint8_t Ctrl) {
   return Ctrl;
 }
 
+void delay_ms(int ms) {
+  int i;
+  while (ms > 0) {
+    for(i=0; i< 1600*2; i++);
+    ms--;
+  }
+}
+
 void LCDInit() {
-  // TODO: wait for more than 15 ms
+  // wait for more than 15 ms
+  delay_ms(15);
   // Set Function: 8 bit interface
   LCDWriteNibble(0,LCD_DATA_MSB(LCD_CMD_SET_FUNCTION | LCD_FUNCTION_8BIT));
-  // TODO: wait for more than 4.1 ms
+  // wait for more than 4.1 ms
+  delay_ms(4);
   // Set Function: 8 bit interface
   LCDWriteNibble(0,LCD_DATA_MSB(LCD_CMD_SET_FUNCTION | LCD_FUNCTION_8BIT));
-  // TODO: wait for more than 100us
+  // wait for more than 100us
+  delay_ms(1);
+  // Set Function: 8 bit interface
+  LCDWriteNibble(0,LCD_DATA_MSB(LCD_CMD_SET_FUNCTION | LCD_FUNCTION_8BIT));
   // Set Function: 4 bit interface
   LCDWriteNibble(0,LCD_DATA_MSB(LCD_CMD_SET_FUNCTION | LCD_FUNCTION_4BIT));
   // Set Function: 4 bit interface, two lines, 5x8 characters
   LCDWrite(0,LCD_CMD_SET_FUNCTION | LCD_FUNCTION_4BIT | LCD_FUNCTION_TWO_LINES | LCD_FUNCTION_5X8);
-  // TODO: wait for more than 37us
+  // wait for more than 37us
+  delay_ms(1);
   // Display Control: display on, cursor off, blink off
   LCDWrite(0,LCD_CMD_DISPLAY_CONTOL | LCD_DISPLAY_CONTROL_DISPLAY_ON | LCD_DISPLAY_CONTROL_CURSOR_OFF | LCD_DISPLAY_CONTROL_BLINK_OFF);
-  // TODO: wait for more than 37us
+  //  wait for more than 37us
+  delay_ms(1);
   // Clear display
   LCDWrite(0,LCD_CMD_CLEAR_DISPLAY);
-  // TODO: wait for more than 1.52ms
+  // wait for more than 1.52ms
+  delay_ms(2);
   // Set Entry Mode: increment address counter, don't shift
   LCDWrite(0,LCD_CMD_SET_ENTRY_MODE | LCD_ENTRY_MODE_FIXED | LCD_ENTRY_MODE_INC);
   // Initialization done
@@ -221,8 +237,12 @@ int main(void) {
   WDTCTL = WDTPW + WDTHOLD;
 
   // LCD control and data signals are outputs
-  LCD_CTRL_DIR |= LCD_CTRL;
-  LCD_DATA_DIR |= LCD_DATA;
+  LCD_CTRL_DIR |=  LCD_CTRL;
+  LCD_DATA_DIR |=  LCD_DATA;
+  LCD_DATA_SEL &= ~LCD_DATA;   // P2.6 and P2.7 are configured for XIN/XOUT after reset
+
+  LED_LCD_DIR |= LED_LCD;
+  LED_LCD_OUT |= LED_LCD;
 
   LCDInit();
 
@@ -231,8 +251,6 @@ int main(void) {
 
   // main loop
   for (;;) {
-    // toggle LEDs
-    P1OUT ^= 0x01 | 0x40;
     // delay
     for(i=0; i< 20000; i++);
   }

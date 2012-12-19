@@ -28,7 +28,7 @@ all: testlcd
 testlcd: $(OBJS) $(USER_OBJS)
 	@echo 'Building target: $@'
 	@echo 'Invoking: GCC C Linker'
-	msp430-gcc -mmcu=msp430g2231 -o "testlcd" $(OBJS) $(USER_OBJS) $(LIBS)
+	msp430-gcc -mmcu=msp430g2553 -o "testlcd" $(OBJS) $(USER_OBJS) $(LIBS)
 	@echo 'Finished building target: $@'
 	@echo ' '
 
