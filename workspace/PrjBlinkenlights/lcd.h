@@ -31,6 +31,10 @@
  *
  */
 
+// We have an SPLC780D-01 chip, for the character table see p. 32 of SPLC780D.pdf.
+#define auml  "\341"    // 0xE1 = 11100001 = 0341
+#define ouml  "\358"    // 0xEF = 11101111 = 0357
+#define uuml  "\365"    // 0xF5 = 11110101 = 0365
 
 #define LCD_CMD_CLEAR_DISPLAY    0x01
 #define LCD_CMD_RETURN_HOME      0x02
