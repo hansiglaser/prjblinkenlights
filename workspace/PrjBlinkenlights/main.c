@@ -281,15 +281,15 @@ void init_io() {
  */
 void init_timer() {
   // Setup TimerA0: CCR1 PWM used for LCD backlight only
-  TA0CTL   = TASSEL_2 | MC_2;           // Clk source is SMCLK, continuous mode, no interrupt
+  TA0CTL   = TASSEL_2 | MC_2 | TAIE;    // Clk source is SMCLK, continuous mode, interrupt on reset
   TA0CCTL1 = OUTMOD_7;                  // CCR1 output is reset when CCR1 is reached and set when CCR0 is reached
   TA0CCR0  = 0x0000;                    // set to "end of periode"
-  TA0CCR1  = 0x8000;                    // CCR1 PWM duty cycle default value
+  TA0CCR1  = 0x0000;                    // CCR1 PWM duty cycle default value: off
 
   // Setup TimerA1: CCR0..CCR2 PWMs used for RGB LED strip
-  TA1CCTL0 = OUTMOD_1;                  // CCR0 output is set when CCR0 is reached
-  TA1CCTL1 = OUTMOD_1;                  // CCR1 output is set when CCR1 is reached
-  TA1CCTL2 = OUTMOD_1;                  // CCR2 output is set when CCR1 is reached
+  TA1CCTL0 = OUTMOD_5;                  // CCR0 output is reset when CCR0 is reached
+  TA1CCTL1 = OUTMOD_5;                  // CCR1 output is reset when CCR1 is reached
+  TA1CCTL2 = OUTMOD_5;                  // CCR2 output is reset when CCR2 is reached
   TA1CCR0  = 0x0000;                    // CCR0 PWM duty cycle default value
   TA1CCR1  = 0x0000;                    // CCR1 PWM duty cycle default value
   TA1CCR2  = 0x0000;                    // CCR2 PWM duty cycle default value
@@ -301,9 +301,9 @@ void init_timer() {
  ****************************************************************************/
 
 int cbOff(void* Data) {
-  PWMRGBRed   = 0xFFFF;   // some light still stays active because of the PWM simulation
-  PWMRGBGreen = 0xFFFF;
-  PWMRGBBlue  = 0xFFFF;
+  PWMRGBRed   = 0x0000;
+  PWMRGBGreen = 0x0000;
+  PWMRGBBlue  = 0x0000;
   Semaphores |= SEM_PWM_RGB;
   return 0;
 }
@@ -512,6 +512,35 @@ int8_t RotEncSpeed(uint8_t Count) {
 }
 
 /**
+ * Timer0 overflow interrupt
+ *
+ * Timer0 is used for the LCD backlight PWM only. During fade-out, i.e. when
+ * decrementing CCR1, at some point the value is decremented below the current
+ * timer register. Therefore, in this period the PWM stays on and the light
+ * flickers.
+ *
+ * To avoid this problem, we stop and reset the timer register after every
+ * period before setting a new CCR1 value. In this case, the timer register
+ * always starts at 0x0000 and cannot miss the CCR1 value.
+ */
+// Timer0 A1 interrupt service routine for CC1 and TA interrupt
+#pragma vector = TIMER0_A1_VECTOR
+__interrupt void Timer0_A1 (void) {
+  // stop timer and reset timer register /////////////////////////////////////
+  TA0CTL   = TASSEL_2 | MC_0;
+  TA0R     = 0x0000;
+
+  // set new PWM value ///////////////////////////////////////////////////////
+  if (Semaphores & SEM_PWM_LCD) {
+    TA0CCR1 = PWMLCD;          // LCD backlight
+    Semaphores &= ~SEM_PWM_LCD;
+  }
+
+  // start the timer again ///////////////////////////////////////////////////
+  TA0CTL   = TASSEL_2 | MC_2 | TAIE;    // Clk source is SMCLK, continuous mode, interrupt on reset
+}
+
+/**
  * Periodic Timer Interrupt
  *
  * Jobs:
@@ -520,31 +549,35 @@ int8_t RotEncSpeed(uint8_t Count) {
  *  - ramp up/down PWMs
  *  - handle timeouts
  */
-// Timer A0 interrupt service routine for CC1 and TA interrupt
+// Timer1 A1 interrupt service routine for CC1 and TA interrupt
 #pragma vector = TIMER1_A1_VECTOR
-__interrupt void Timer_A (void) {
-  TA1CTL &= ~TAIFG;              // clear TAIFG (seems necessary!)
+__interrupt void Timer1_A1 (void) {
+  uint16_t Mode0,Mode1,Mode2;
 
-  // change output mode to reset the output signal ///////////////////////////
-  TA1CCTL0 = OUTMOD_0;
-  TA1CCTL0 = OUTMOD_1;
-  TA1CCTL1 = OUTMOD_0;
-  TA1CCTL1 = OUTMOD_1;
-  TA1CCTL2 = OUTMOD_0;
-  TA1CCTL2 = OUTMOD_1;
+  // stop timer and reset timer register /////////////////////////////////////
+  TA1CTL   = TASSEL_2 | MC_0;
+  TA1R     = 0x0000;
 
   // set new PWM values //////////////////////////////////////////////////////
-  if (Semaphores & SEM_PWM_LCD) {
-    TA0CCR1 = PWMLCD;          // LCD backlight
-    Semaphores &= ~SEM_PWM_LCD;
-  }
   if (Semaphores & SEM_PWM_RGB) {
     TA1CCR0 = PWMRGBRed;       // red
     TA1CCR1 = PWMRGBGreen;     // green
     TA1CCR2 = PWMRGBBlue;      // blue
     Semaphores &= ~SEM_PWM_RGB;
   }
-  // when decrementing, the LED sometimes flickers, this is because the timer can overflow
+  // change output mode to reset the output signal ///////////////////////////
+  Mode0 = Mode1 = Mode2 = OUTMOD_0 | OUT;  // These variables help to be a
+  if (!PWMRGBRed)   Mode0 = OUTMOD_0;      // bit faster below when switching
+  if (!PWMRGBGreen) Mode1 = OUTMOD_0;      // on the outputs and until the
+  if (!PWMRGBBlue)  Mode2 = OUTMOD_0;      // timer starts and switches them
+  TA1CCTL0 = Mode0;  TA1CCTL0 = OUTMOD_5;  // off again.
+  TA1CCTL1 = Mode1;  TA1CCTL1 = OUTMOD_5;
+  TA1CCTL2 = Mode2;  TA1CCTL2 = OUTMOD_5;
+//  TA1CCTL0 = (PWMRGBRed   ? OUTMOD_0 | OUT : OUTMOD_0);  TA1CCTL0 = OUTMOD_5;
+//  TA1CCTL1 = (PWMRGBGreen ? OUTMOD_0 | OUT : OUTMOD_0);  TA1CCTL1 = OUTMOD_5;
+//  TA1CCTL2 = (PWMRGBBlue  ? OUTMOD_0 | OUT : OUTMOD_0);  TA1CCTL2 = OUTMOD_5;
+  // start the timer again
+  TA1CTL   = TASSEL_2 | MC_2 | TAIE;    // Clk source is SMCLK, continuous mode, interrupt on reset
 
   // handle timeouts /////////////////////////////////////////////////////////
   if (TimeoutLcdBacklight) {
