@@ -287,21 +287,30 @@ void init_timer() {
   TA0CCR1  = 0x8000;                    // CCR1 PWM duty cycle default value
 
   // Setup TimerA1: CCR0..CCR2 PWMs used for RGB LED strip
-  TA1CTL   = TASSEL_2 | MC_2 | TAIE;    // Clk source is SMCLK, continuous mode, interrupt on reset
   TA1CCTL0 = OUTMOD_1;                  // CCR0 output is set when CCR0 is reached
   TA1CCTL1 = OUTMOD_1;                  // CCR1 output is set when CCR1 is reached
   TA1CCTL2 = OUTMOD_1;                  // CCR2 output is set when CCR1 is reached
   TA1CCR0  = 0x0000;                    // CCR0 PWM duty cycle default value
   TA1CCR1  = 0x0000;                    // CCR1 PWM duty cycle default value
   TA1CCR2  = 0x0000;                    // CCR2 PWM duty cycle default value
+  TA1CTL   = TASSEL_2 | MC_2 | TAIE;    // Clk source is SMCLK, continuous mode, interrupt on reset
 }
 
 /****************************************************************************
  **** Functions *************************************************************
  ****************************************************************************/
 
+int cbOff(void* Data) {
+  PWMRGBRed   = 0xFFFF;   // some light still stays active because of the PWM simulation
+  PWMRGBGreen = 0xFFFF;
+  PWMRGBBlue  = 0xFFFF;
+  Semaphores |= SEM_PWM_RGB;
+  return 0;
+}
+
 int cbColorTemperature(int Delta, void* Data) {
   // TODO: either as list or as values with varying step size
+  return 0;
 }
 
 void cbRGB() {
@@ -334,7 +343,7 @@ const TMenuEntry MenuWhite[] = {
 
 const TMenuEntry MenuRGB[] = {
   {.Type = metNumber, .Label = "Rot",           .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
-  {.Type = metNumber, .Label = "Grün",          .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Gr"uuml"n",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
   {.Type = metNumber, .Label = "Blau",          .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
@@ -376,7 +385,7 @@ const TMenuEntry MenuConfig[] = {
 };
 
 const TMenuEntry MainMenu[] = {
-  {.Type = metSimple, .Label = "Aus",           .SimpleData  = {.Callback = 0, .CBData = 0}},
+  {.Type = metSimple, .Label = "Aus",           .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
   {.Type = metSubmenu,.Label = "Weiss",         .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite} },
   {.Type = metSubmenu,.Label = "RGB",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB} },
   {.Type = metSubmenu,.Label = "HSV",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV} },
