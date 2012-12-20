@@ -74,14 +74,36 @@ uint16_t Brightness2PWM(uint16_t Brightness) {
  *
  */
 void RGB2HSV(const TColor* RGB, TColor* HSV) {
-#if COLOR_FLOAT == 0
-#else
-  int Min = RGB->RGB.R;
+  uint16_t Min = RGB->RGB.R;
   if (RGB->RGB.G < Min) Min = RGB->RGB.G;
   if (RGB->RGB.B < Min) Min = RGB->RGB.B;
-  int Max = RGB->RGB.R;
-  if (RGB->RGB.G > Max) Max = RGB->RGB.G;
-  if (RGB->RGB.B > Max) Max = RGB->RGB.B;
+  uint8_t MaxX = 0;
+  uint16_t Max = RGB->RGB.R;
+  if (RGB->RGB.G > Max) { Max = RGB->RGB.G; MaxX++; }
+  if (RGB->RGB.B > Max) { Max = RGB->RGB.B; MaxX++; }
+#if COLOR_FLOAT == 0
+  if (Min == Max) {
+    HSV->HSV.H = 0;
+    HSV->HSV.S = 0;
+  } else {
+    uint16_t Scale = (uint32_t)715827883 / (Max-Min);  // 65536*65536/6;
+    uint16_t Diff;
+    switch (MaxX) {
+      case 0:  Diff = RGB->RGB.G - RGB->RGB.B; break;
+      case 1:  Diff = RGB->RGB.B - RGB->RGB.R; break;
+      default: Diff = RGB->RGB.R - RGB->RGB.G; break;
+    }
+    HSV->HSV.H = (((uint32_t)Scale * Diff + 0x7FFF) >> 16);
+    switch (MaxX) {
+      case 0:  break;
+      case 1:  HSV->HSV.H += 65536/3;   break;
+      default: HSV->HSV.H += 65536*2/3; break;
+    }
+
+    HSV->HSV.S = ((uint32_t)(Max-Min) * 65535) / Max;
+  }
+
+#else
   float Scale = (65536.0/6.0) / ((Max-Min)*1.0);
 
   if (Min == Max) {
@@ -90,7 +112,7 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
     HSV->HSV.H = floor((RGB->RGB.G - RGB->RGB.B)*1.0 * Scale);
   } else if (Max == RGB->RGB.G) {
     HSV->HSV.H = floor((RGB->RGB.B - RGB->RGB.R)*1.0 * Scale) + (65536/3);
-  } else /*  Max == RGB->RGB.R */ {
+  } else /*  Max == RGB->RGB.B */ {
     HSV->HSV.H = floor((RGB->RGB.R - RGB->RGB.G)*1.0 * Scale) + (65536/3)*2;
   }
 
@@ -100,8 +122,8 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
     HSV->HSV.S = floor(((Max-Min)*65535.0)/(Max*1.0));
   }
 
-  HSV->HSV.V = Max;
 #endif // COLOR_FLOAT == 0
+  HSV->HSV.V = Max;
 }
 
 /**
