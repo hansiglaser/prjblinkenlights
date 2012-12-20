@@ -15,6 +15,9 @@
 //#include <gtk/gtk.h>
 
 #define MAXDIFF 10
+//#define TEST_HSV2RGB
+#define TEST_RGB2HSV
+//#define TEST_WHITE2RGB
 
 #include "color.h"
 
@@ -44,6 +47,7 @@ int main(void) {
   int Error;
   int TotalError = 0;
 
+#ifdef TEST_HSV2RGB
   // Test HSV2RGB
   for (Vi = 0; Vi <= 100; Vi++) {
     v = Vi*1.0/100.0;
@@ -76,7 +80,9 @@ int main(void) {
       }
     }
   }
+#endif // TEST_HSV2RGB
 
+#ifdef TEST_RGB2HSV
   // Test RGB2HSV
   for (Bi = 0; Bi <= 100; Bi++) {
     b = Bi*1.0/100.0;
@@ -109,7 +115,9 @@ int main(void) {
       }
     }
   }
+#endif // TEST_RGB2HSV
 
+#ifdef TEST_WHITE2RGB
   printf("<pre>\n");
   for (T = 1000; T <= 40000; T+=100) {
     White2RGB(T,&RGB);
@@ -120,6 +128,7 @@ int main(void) {
         RGB.RGB.R >> 8,RGB.RGB.G >> 8,RGB.RGB.B >> 8);
   }
   printf("</pre>\n");
+#endif
 
   printf("%d errors found, total deviation is %d.\n",Errors,TotalError);
   return (Errors == 0 ? 0 : 1);

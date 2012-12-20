@@ -9,10 +9,36 @@
 #include <stdint.h>
 #include "color.h"
 
+#define COLOR_FLOAT 0
+
+#if COLOR_FLOAT == 0
+#define BRIGHTNESS2PWM_VALUES_BITS    5
+#define BRIGHTNESS2PWM_VALUES_SHIFT   (16 - BRIGHTNESS2PWM_VALUES_BITS)
+#define BRIGHTNESS2PWM_VALUES_MASK    ((1 << BRIGHTNESS2PWM_VALUES_SHIFT)-1)
+#define BRIGHTNESS2PWM_VALUES_COUNT   ((1 << BRIGHTNESS2PWM_VALUES_BITS) + 1)
+const uint16_t Brightness2PWMValues[BRIGHTNESS2PWM_VALUES_COUNT] = {
+      0,    21,    47,    79,   119,   167,   226,   299,   388,   497,   632,   796,   999,  1247,  1551,  1925,
+   2384,  2947,  3638,  4487,  5527,  6805,  8373, 10297, 12659, 15557, 19114, 23480, 28837, 35413, 43483, 53387,
+  65535
+};
+#endif // COLOR_FLOAT == 0
+
 /**
  * Convert intensity to PWM with non-linear function
  */
 uint16_t Brightness2PWM(uint16_t Brightness) {
+#if COLOR_FLOAT == 0
+  uint16_t Index = Brightness >> BRIGHTNESS2PWM_VALUES_SHIFT;
+  uint16_t Inter = Brightness &  BRIGHTNESS2PWM_VALUES_MASK;
+  uint16_t a = Brightness2PWMValues[Index];
+  uint16_t b = Brightness2PWMValues[Index + 1];
+
+  uint16_t d = b-a;
+  uint32_t y = (uint32_t)d * (uint32_t)Inter + (BRIGHTNESS2PWM_VALUES_MASK >> 1);  // round
+  uint16_t z = a + (y >> BRIGHTNESS2PWM_VALUES_SHIFT);
+
+  return z;
+#else
   float x;
   uint16_t y;
   if (Brightness == 0) return 0;
@@ -21,6 +47,7 @@ uint16_t Brightness2PWM(uint16_t Brightness) {
   x = expf(Brightness*0.0001);
   y = floor((x-1.0) * (65535.0 / (exp(6.5535)-1.0)));
   return y;
+#endif // COLOR_FLOAT == 0
 }
 
 /**
@@ -38,7 +65,7 @@ uint16_t Brightness2PWM(uint16_t Brightness) {
  * else if MAX == G then H = 120° + 60° * (B-R)/(MAX-MIN)
  * else if MAX == B then H = 240° + 60° * (R-G)/(MAX-MIN)
  *
- * if H < 0° then H = H * 360°
+ * if H < 0° then H = H + 360°
  *
  * if MAX = 0 then S = 0    // -> R = G = B = 0
  * else S = (MAX-MIN)/MAX
@@ -47,12 +74,36 @@ uint16_t Brightness2PWM(uint16_t Brightness) {
  *
  */
 void RGB2HSV(const TColor* RGB, TColor* HSV) {
-  int Min = RGB->RGB.R;
+  uint16_t Min = RGB->RGB.R;
   if (RGB->RGB.G < Min) Min = RGB->RGB.G;
   if (RGB->RGB.B < Min) Min = RGB->RGB.B;
-  int Max = RGB->RGB.R;
-  if (RGB->RGB.G > Max) Max = RGB->RGB.G;
-  if (RGB->RGB.B > Max) Max = RGB->RGB.B;
+  uint8_t MaxX = 0;
+  uint16_t Max = RGB->RGB.R;
+  if (RGB->RGB.G > Max) { Max = RGB->RGB.G; MaxX = 1; }
+  if (RGB->RGB.B > Max) { Max = RGB->RGB.B; MaxX = 2; }
+#if COLOR_FLOAT == 0
+  if (Min == Max) {
+    HSV->HSV.H = 0;
+    HSV->HSV.S = 0;
+  } else {
+    uint32_t Scale = (uint32_t)715827883 / (Max-Min);  // 65536*65536/6;
+    int32_t Diff;
+    switch (MaxX) {
+      case 0:  Diff = RGB->RGB.G - RGB->RGB.B; break;
+      case 1:  Diff = RGB->RGB.B - RGB->RGB.R; break;
+      default: Diff = RGB->RGB.R - RGB->RGB.G; break;
+    }
+    HSV->HSV.H = (((uint32_t)Scale * Diff + 0x7FFF) >> 16);
+    switch (MaxX) {
+      case 0:  break;
+      case 1:  HSV->HSV.H += 65536/3;   break;
+      default: HSV->HSV.H += 65536*2/3; break;
+    }
+
+    HSV->HSV.S = ((uint32_t)(Max-Min) * 65535) / Max;
+  }
+
+#else
   float Scale = (65536.0/6.0) / ((Max-Min)*1.0);
 
   if (Min == Max) {
@@ -61,7 +112,7 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
     HSV->HSV.H = floor((RGB->RGB.G - RGB->RGB.B)*1.0 * Scale);
   } else if (Max == RGB->RGB.G) {
     HSV->HSV.H = floor((RGB->RGB.B - RGB->RGB.R)*1.0 * Scale) + (65536/3);
-  } else /*  Max == RGB->RGB.R */ {
+  } else /*  Max == RGB->RGB.B */ {
     HSV->HSV.H = floor((RGB->RGB.R - RGB->RGB.G)*1.0 * Scale) + (65536/3)*2;
   }
 
@@ -71,6 +122,7 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
     HSV->HSV.S = floor(((Max-Min)*65535.0)/(Max*1.0));
   }
 
+#endif // COLOR_FLOAT == 0
   HSV->HSV.V = Max;
 }
 
@@ -97,6 +149,8 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
  *
  */
 void HSV2RGB(const TColor* HSV, TColor* RGB) {
+#if COLOR_FLOAT == 0
+#else
   float f = ((HSV->HSV.H*1.0) / (65536.0/6.0));
   int hi = floor(f);
   f = f - hi;
@@ -120,6 +174,7 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
   case 5:
     RGB->RGB.R = V; RGB->RGB.G = p; RGB->RGB.B = q; break;
   }
+#endif // COLOR_FLOAT == 0
 }
 
 /**
@@ -131,6 +186,8 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
  * http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
  */
 void White2RGB(const uint16_t Temp, TColor* RGB) {
+#if COLOR_FLOAT == 0
+#else
   float R,G,B;
   int32_t Ri,Gi,Bi;
 
@@ -165,4 +222,5 @@ void White2RGB(const uint16_t Temp, TColor* RGB) {
     else if (Bi > 0xFFFF) RGB->RGB.B = 0xFFFF;
     else                  RGB->RGB.B = Bi;
   }
+#endif // COLOR_FLOAT == 0
 }
