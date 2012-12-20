@@ -15,8 +15,8 @@
 //#include <gtk/gtk.h>
 
 #define MAXDIFF 10
-//#define TEST_HSV2RGB
-#define TEST_RGB2HSV
+#define TEST_HSV2RGB
+//#define TEST_RGB2HSV
 //#define TEST_WHITE2RGB
 
 #include "color.h"

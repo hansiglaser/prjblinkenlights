@@ -150,6 +150,14 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
  */
 void HSV2RGB(const TColor* HSV, TColor* RGB) {
 #if COLOR_FLOAT == 0
+  uint32_t fi = (uint32_t)(HSV->HSV.H << 16) / (10923);   // 65536/6
+  int hi = fi >> 16; //& 0xFFFF0000;
+  uint32_t f = fi & 0x0000FFFF;
+
+  int32_t p = HSV->HSV.V * (65536 - HSV->HSV.S) >> 16;
+  int32_t q = (HSV->HSV.V * (65536 - (int32_t)((((uint32_t)HSV->HSV.S*f        ) + 0x7FFF) >> 16)) + 0x7FFF) >> 16;
+  int32_t t = (HSV->HSV.V * (65536 - (int32_t)((((uint32_t)HSV->HSV.S*(65536-f)) + 0x7FFF) >> 16)) + 0x7FFF) >> 16;
+  uint16_t V = HSV->HSV.V;
 #else
   float f = ((HSV->HSV.H*1.0) / (65536.0/6.0));
   int hi = floor(f);
@@ -158,6 +166,7 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
   int32_t q = HSV->HSV.V * (65536 - (int32_t)floor((HSV->HSV.S*1.0)*f)) >> 16;
   int32_t t = HSV->HSV.V * (65536 - (int32_t)floor((HSV->HSV.S*1.0)*(1.0-f))) >> 16;
   int16_t V = HSV->HSV.V;
+#endif // COLOR_FLOAT == 0
 
   switch (hi) {
   case 0:
@@ -174,7 +183,6 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
   case 5:
     RGB->RGB.R = V; RGB->RGB.G = p; RGB->RGB.B = q; break;
   }
-#endif // COLOR_FLOAT == 0
 }
 
 /**
