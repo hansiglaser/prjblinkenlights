@@ -151,7 +151,7 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
  */
 void HSV2RGB(const TColor* HSV, TColor* RGB) {
 #if COLOR_FLOAT == 0
-  uint32_t fi = (uint32_t)(HSV->HSV.H << 16) / (10923);   // 65536/6
+  uint32_t fi = ((uint32_t)HSV->HSV.H << 16) / (10923);   // 65536/6
   int hi = fi >> 16; //& 0xFFFF0000;
   uint32_t f = fi & 0x0000FFFF;
 
