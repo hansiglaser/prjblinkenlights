@@ -6,6 +6,8 @@
  */
 
 #include <msp430g2553.h>
+#include <stdint.h>
+#include <stdbool.h>
 #include "lcd.h"
 
 /**
@@ -56,6 +58,25 @@ void LCDWrite(uint8_t Ctrl, uint8_t Data) {
 void LCDWriteString(const char* St) {
   while (*St) {
     LCDWrite(LCD_RS,*St++);
+  }
+}
+
+void LCDWriteBCD(uint16_t BCD) {
+  uint8_t i;
+  char Digit;
+  bool NoSpace;
+
+  NoSpace = false;
+  for (i=0; i < 4; i++) {
+    Digit = (BCD >> 12) & 0x0F;
+    if (Digit || NoSpace || (i == 3)) {
+      Digit = Digit+'0';
+      NoSpace = true;
+    } else {
+      Digit = ' ';
+    }
+    LCDWrite(LCD_RS,Digit);
+    BCD = BCD << 4;
   }
 }
 

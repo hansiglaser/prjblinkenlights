@@ -35,6 +35,10 @@
 #define auml  "\341"    // 0xE1 = 11100001 = 0341
 #define ouml  "\358"    // 0xEF = 11101111 = 0357
 #define uuml  "\365"    // 0xF5 = 11110101 = 0365
+#define larr  '\177'    // 0x7F = 01111111 = 0277
+#define rarr  '\176'    // 0x7E = 01111110 = 0276
+#define deg   '\337'    // 0xDF = 11011111 = 0337
+// damn, C doesn't support this for strings and chars equally :-( -> dirty solution
 
 #define LCD_CMD_CLEAR_DISPLAY    0x01
 #define LCD_CMD_RETURN_HOME      0x02
@@ -73,6 +77,7 @@
 
 void LCDWrite(uint8_t Ctrl, uint8_t Data);
 void LCDWriteString(const char* St);
+void LCDWriteBCD(uint16_t BCD);
 
 static inline void LCDGoto(uint8_t AddrCnt) {
   LCDWrite(0,LCD_CMD_SET_DDRAM_ADDR | AddrCnt);
