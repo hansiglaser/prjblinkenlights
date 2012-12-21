@@ -12,6 +12,7 @@
 #define COLOR_FLOAT 0
 
 #if COLOR_FLOAT == 0
+// this lookup table was generated using Brightness2PWM.m
 #define BRIGHTNESS2PWM_VALUES_BITS    5
 #define BRIGHTNESS2PWM_VALUES_SHIFT   (16 - BRIGHTNESS2PWM_VALUES_BITS)
 #define BRIGHTNESS2PWM_VALUES_MASK    ((1 << BRIGHTNESS2PWM_VALUES_SHIFT)-1)
@@ -150,7 +151,7 @@ void RGB2HSV(const TColor* RGB, TColor* HSV) {
  */
 void HSV2RGB(const TColor* HSV, TColor* RGB) {
 #if COLOR_FLOAT == 0
-  uint32_t fi = (uint32_t)(HSV->HSV.H << 16) / (10923);   // 65536/6
+  uint32_t fi = ((uint32_t)HSV->HSV.H << 16) / (10923);   // 65536/6
   int hi = fi >> 16; //& 0xFFFF0000;
   uint32_t f = fi & 0x0000FFFF;
 
@@ -185,6 +186,30 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
   }
 }
 
+#if COLOR_FLOAT == 0
+// these lookup tables were generated using White2RGB.m
+#define WHITE2RGB_VALUES_BITS    6
+#define WHITE2RGB_VALUES_START   430
+#define WHITE2RGB_VALUES_SHIFT   (16 - WHITE2RGB_VALUES_BITS)
+#define WHITE2RGB_VALUES_MASK    ((1 << WHITE2RGB_VALUES_SHIFT)-1)
+#define WHITE2RGB_VALUES_COUNT   39
+const uint16_t White2RGBRed[WHITE2RGB_VALUES_COUNT] = {
+  65535, 65535, 65535, 65535, 65535, 65535, 65352, 59722, 55764, 52898, 50737, 49061, 47724, 46637, 45739, 44986,
+  44343, 43794, 43316, 42896, 42528, 42200, 41906, 41644, 41406, 41189, 40991, 40812, 40645, 40492, 40350, 40222,
+  40096, 39986, 39881, 39781, 39686, 39602, 39520
+};
+const uint16_t White2RGBGreen[WHITE2RGB_VALUES_COUNT] = {
+    429, 26946, 40822, 50017, 56258, 60739, 63886, 60688, 58346, 56609, 55274, 54224, 53378, 52683, 52103, 51612,
+  51192, 50831, 50513, 50236, 49992, 49773, 49575, 49395, 49237, 49091, 48957, 48835, 48722, 48621, 48524, 48434,
+  48351, 48276, 48202, 48134, 48071, 48013, 47956
+};
+const uint16_t White2RGBBlue[WHITE2RGB_VALUES_COUNT] = {
+      0,     0, 18350, 35053, 47752, 57714, 65421, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535,
+  65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535, 65535,
+  65535, 65535, 65535, 65535, 65535, 65535, 65535
+};
+#endif // COLOR_FLOAT == 0
+
 /**
  * Create an RGB color from a color temperature
  *
@@ -193,8 +218,45 @@ void HSV2RGB(const TColor* HSV, TColor* RGB) {
  *
  * http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
  */
-void White2RGB(const uint16_t Temp, TColor* RGB) {
+void White2RGB(uint16_t Temp, TColor* RGB) {
 #if COLOR_FLOAT == 0
+  if (Temp < 1000) {
+    return;
+  }
+  Temp = Temp - WHITE2RGB_VALUES_START;
+
+  uint16_t Index = Temp >> WHITE2RGB_VALUES_SHIFT;
+  if (Index >= WHITE2RGB_VALUES_COUNT-1) {
+    return;
+  }
+  uint16_t Inter = Temp &  WHITE2RGB_VALUES_MASK;
+  uint16_t a,b;
+  int32_t d,y;
+
+  // red
+  a = White2RGBRed[Index];
+  b = White2RGBRed[Index + 1];
+  d = b-a;
+  y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+  RGB->RGB.R = a + (y >> WHITE2RGB_VALUES_SHIFT);
+
+  // green
+  a = White2RGBGreen[Index];
+  b = White2RGBGreen[Index + 1];
+  d = b-a;
+  y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+  RGB->RGB.G = a + (y >> WHITE2RGB_VALUES_SHIFT);
+
+  // blue
+  if (Temp < 1900-WHITE2RGB_VALUES_START) {
+    RGB->RGB.B = 0;
+  } else {
+    a = White2RGBBlue[Index];
+    b = White2RGBBlue[Index + 1];
+    d = b-a;
+    y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+    RGB->RGB.B = a + (y >> WHITE2RGB_VALUES_SHIFT);
+  }
 #else
   float R,G,B;
   int32_t Ri,Gi,Bi;
