@@ -61,11 +61,14 @@ int cbCircle(int Delta, void* Data);
  **** Internal Data Structures **********************************************
  ****************************************************************************/
 
+#define SUBMENU_STATE_FLAG_EDIT   0x01 ///< editing an metNumber or metString entry
+
 typedef struct {
   const TMenuEntry* Menu;  ///< points to a TMenuEntry[]
   int Item;   ///< Index within the menu
   int First;  ///< Index within the menu of the first line shown on the display
   int Count;  ///< number of menu items in this submenu
+  uint16_t Flags;   ///< see SUBMENU_STATE_FLAG_*
 } TSubmenuState;
 
 typedef struct {

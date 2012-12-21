@@ -314,13 +314,28 @@ int cbColorTemperature(int Delta, void* Data) {
 }
 
 void cbRGB() {
+  // update PWM
+  PWMRGBRed   = Brightness2PWM(655 * PersistentRam.RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(655 * PersistentRam.RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(655 * PersistentRam.RGB.RGB.B);
+  Semaphores |= SEM_PWM_RGB;
   // TODO: update HSV values
-  // TODO: update PWM
 }
 
 void cbHSV() {
+  TColor RGB;
+  TColor HSV;
+  // calculate RGB values
+  HSV.HSV.H = 182 * PersistentRam.HSV.HSV.H;
+  HSV.HSV.S = 655 * PersistentRam.HSV.HSV.S;
+  HSV.HSV.V = 655 * PersistentRam.HSV.HSV.V;
+  HSV2RGB(&HSV,&RGB);
+  // update PWM
+  PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
+  Semaphores |= SEM_PWM_RGB;
   // TODO: update RGB values
-  // TODO: update PWM
 }
 
 void cbRainbow() {
@@ -349,7 +364,7 @@ const TMenuEntry MenuRGB[] = {
 };
 
 const TMenuEntry MenuHSV[] = {
-  {.Type = metNumber, .Label = "H: Farbton",    .NumberData  = {.Unit = 'X', .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "H: Farbton",    .NumberData  = {.Unit = deg, .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
   {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
   {.Type = metNumber, .Label = "V: Helligkeit", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
