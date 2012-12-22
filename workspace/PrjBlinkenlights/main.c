@@ -211,11 +211,6 @@ volatile uint16_t RainbowHueInc;
 #define LCD_FADE_IN_STEP     (65536/244)*5   // 1/5 = 0.2s
 #define LCD_FADE_OUT_STEP    (65536/244)/2   // 2s
 
-// TODO: do we need this define?
-#define TIMER_DIV   (8*16)
-// TODO: if no define is needed, move this variable directly above the ISR
-unsigned int timerCount = 0;
-
 /****************************************************************************
  **** Initialization ********************************************************
  ****************************************************************************/
@@ -372,7 +367,6 @@ void cbHSV() {
   PWMRGBBlue  = Brightness2PWM(PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
   Semaphores &= ~SEM_RAINBOW;
-  // TODO: update RGB values
 }
 
 void cbRainbow() {
@@ -642,6 +636,11 @@ __interrupt void Timer0_A1 (void) {
  *  - read rotary encoder and button -> notify main program
  *  - ramp up/down PWMs
  *  - handle timeouts
+ *
+ * SMCLK = 16MHz
+ * -> period of 65536 -> 244.14Hz interrupt rate = 4.096 ms periode
+ * -> but since the timer is stopped shortly, the period is slightly longer
+ *
  */
 // Timer1 A1 interrupt service routine for CC1 and TA interrupt
 #pragma vector = TIMER1_A1_VECTOR
@@ -681,18 +680,6 @@ __interrupt void Timer1_A1 (void) {
       LPM0_EXIT; // exit LPM0 when returning from ISR
     }
   }
-
-/*
-  // SMCLK = 16MHz
-  // period of 65536 -> 244.14Hz interrupt rate = 4.096 ms periode
-
-  // divide ISR rate for slower blinking LED
-  timerCount++;
-  if (timerCount >= TIMER_DIV) {
-    timerCount = 0;
-
-  }
-*/
 
   // read in rotary encoder //////////////////////////////////////////////////
   uint8_t NewPhase = ROTENC_PHASE;
