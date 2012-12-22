@@ -388,44 +388,44 @@ void cbSetUserColor(void* Data) {
  ****************************************************************************/
 
 const TMenuEntry MenuWhite[] = {
-  {.Type = metNumber, .Label = "Helligkeit",    .NumberData  = {.Unit = '%', .CBValue = &cbPercent,        .CBData = &PersistentRam.Intensity, .CBChange = cbColorTempChange } },
-  {.Type = metNumber, .Label = "Farbtemp.",     .NumberData  = {.Unit = 'K', .CBValue = &cbColorTempValue, .CBData = &PersistentRam.ColorTemp, .CBChange = cbColorTempChange } },
+  {.Type = metNumber, .Label = "Helligkeit",        .NumberData  = {.Unit = '%', .CBValue = &cbPercent,        .CBData = &PersistentRam.Intensity, .CBChange = cbColorTempChange } },
+  {.Type = metNumber, .Label = "Farbtemp.",         .NumberData  = {.Unit = 'K', .CBValue = &cbColorTempValue, .CBData = &PersistentRam.ColorTemp, .CBChange = cbColorTempChange } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
 const TMenuEntry MenuRGB[] = {
-  {.Type = metNumber, .Label = "Rot",           .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
-  {.Type = metNumber, .Label = "Gr"uuml"n",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
-  {.Type = metNumber, .Label = "Blau",          .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Rot",               .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Gr"uuml"n",         .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Blau",              .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
 const TMenuEntry MenuHSV[] = {
-  {.Type = metNumber, .Label = "H: Farbton",    .NumberData  = {.Unit = deg, .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "H: Farbton",        .NumberData  = {.Unit = deg, .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
   {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
-  {.Type = metNumber, .Label = "V: Helligkeit", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
 const TMenuEntry MenuRainbow[] = {
-  {.Type = metNumber, .Label = "Geschwindigk.", .NumberData  = {.Unit = '%', .CBValue = 0/*TODO*/, .CBData = cbRainbow } },
+  {.Type = metNumber, .Label = "Geschwindigk.",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
   {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
-  {.Type = metNumber, .Label = "V: Helligkeit", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
 const TMenuEntry MenuSaveUserColor[] = {
-  {.Type = metString, .Label = "Name",          .StringData  = {.String = 0/*TODO*/, .Length = 0 } },
-  {.Type = metSimple, .Label = "Speichern",     .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metString, .Label = "Name",              .StringData  = {.String = 0/*TODO*/, .Length = 0 } },
+  {.Type = metSimple, .Label = "Speichern",         .SimpleData  = {.Callback = 0, .CBData = 0} },
   {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
 TMenuEntry MenuUserColors[] = {
-  {.Type = metSimple, .Label = "Farbe 1",       .SimpleData  = {.Callback = 0, .CBData = 0} },
-  {.Type = metSimple, .Label = "Farbe 2",       .SimpleData  = {.Callback = 0, .CBData = 0} },
-  {.Type = metSimple, .Label = "Farbe 3",       .SimpleData  = {.Callback = 0, .CBData = 0} },
-  {.Type = metSimple, .Label = "Farbe 4",       .SimpleData  = {.Callback = 0, .CBData = 0} },
-  {.Type = metSubmenu,.Label = "Speichern",     .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuSaveUserColor} },
+  {.Type = metSimple, .Label = "Farbe 1",           .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 2",           .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 3",           .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSimple, .Label = "Farbe 4",           .SimpleData  = {.Callback = 0, .CBData = 0} },
+  {.Type = metSubmenu,.Label = "Speichern",         .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuSaveUserColor} },
   {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
@@ -437,13 +437,13 @@ const TMenuEntry MenuConfig[] = {
 };
 
 const TMenuEntry MainMenu[] = {
-  {.Type = metSimple, .Label = "Aus",           .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
-  {.Type = metSubmenu,.Label = "Weiss",         .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite} },
-  {.Type = metSubmenu,.Label = "RGB",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB} },
-  {.Type = metSubmenu,.Label = "HSV",           .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV} },
-  {.Type = metSubmenu,.Label = "Regenbogen",    .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow} },
-  {.Type = metSubmenu,.Label = "Eigene Farben", .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors} },
-  {.Type = metSubmenu,.Label = "Konfiguration", .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig} },
+  {.Type = metSimple, .Label = "Aus",               .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
+  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite} },
+  {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB} },
+  {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV} },
+  {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow} },
+  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors} },
+  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig} },
 };
 
 /****************************************************************************
