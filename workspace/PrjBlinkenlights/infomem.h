@@ -17,6 +17,8 @@ typedef struct {
   uint8_t Version;
   TColor RGB;
   TColor HSV;
+  uint16_t ColorTemp;
+  uint16_t Intensity;
 } TPersistent;  // attribute "packed" seems not to be supported :-(
 
 extern TPersistent PersistentRam;

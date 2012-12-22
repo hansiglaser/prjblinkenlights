@@ -308,9 +308,46 @@ int cbOff(void* Data) {
   return 0;
 }
 
-int cbColorTemperature(int Delta, void* Data) {
-  // TODO: either as list or as values with varying step size
-  return 0;
+const uint16_t ColorTempArr[] = {
+  1000,1200,1400,1600,1800,
+  2000,2200,2400,2600,2800,
+  3000,3200,3400,3600,3800,
+  4000,4200,4400,4600,4800,
+  5000,5200,5400,5600,5800,
+  6000,6200,6400,6600,6800,
+  7000,7200,7400,7600,7800,
+  8000,8200,8400,8600,8800,
+  9000,9200,9400,9600,9800,
+};
+
+int cbColorTempValue(int Delta, void* Data) {
+  int i = *((int*)Data);
+  if (Delta == 0)
+    return ColorTempArr[i];
+
+  i += Delta;
+  if (i < 0)
+    i = 0;
+  if (i >= (sizeof(ColorTempArr) / sizeof(ColorTempArr[0]))-1)
+    i = (sizeof(ColorTempArr) / sizeof(ColorTempArr[0]))-1;
+  *((int*)Data) = i;
+  return ColorTempArr[i];
+}
+
+void cbColorTempChange() {
+  uint16_t Temp = ColorTempArr[PersistentRam.ColorTemp];
+  TColor RGB;
+  White2RGB(Temp,&RGB);
+  // intensity
+  uint16_t Intensity = 655 * PersistentRam.Intensity;
+  RGB.RGB.R = ((uint32_t)RGB.RGB.R * Intensity) >> 16;
+  RGB.RGB.G = ((uint32_t)RGB.RGB.G * Intensity) >> 16;
+  RGB.RGB.B = ((uint32_t)RGB.RGB.B * Intensity) >> 16;
+  // update PWM
+  PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
+  Semaphores |= SEM_PWM_RGB;
 }
 
 void cbRGB() {
@@ -351,8 +388,8 @@ void cbSetUserColor(void* Data) {
  ****************************************************************************/
 
 const TMenuEntry MenuWhite[] = {
-  {.Type = metNumber, .Label = "Helligkeit",    .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0 } },
-  {.Type = metNumber, .Label = "Farbtemp.",     .NumberData  = {.Unit = 'K', .CBValue = 0, .CBData = 0 } },
+  {.Type = metNumber, .Label = "Helligkeit",    .NumberData  = {.Unit = '%', .CBValue = &cbPercent,        .CBData = &PersistentRam.Intensity, .CBChange = cbColorTempChange } },
+  {.Type = metNumber, .Label = "Farbtemp.",     .NumberData  = {.Unit = 'K', .CBValue = &cbColorTempValue, .CBData = &PersistentRam.ColorTemp, .CBChange = cbColorTempChange } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
