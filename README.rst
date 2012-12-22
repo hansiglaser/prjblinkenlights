@@ -41,7 +41,7 @@ Language
 
 **Project Blinkenlights** is developed for German speaking users. Therefore
 its user interface and its `user manual
-<prjblinkenlights/blob/master/doc/Betriebsanleitung.pdf>`_ use the German
+<prjblinkenlights/blob/master/doc/Betriebsanleitung.pdf?raw=true>`_ use the German
 language. Nevertheless, all firmware source files and all hardware design
 files are written in English.
 
