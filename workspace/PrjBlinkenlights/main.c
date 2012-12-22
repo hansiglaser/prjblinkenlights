@@ -467,7 +467,7 @@ const TMenuEntry MainMenu[] = {
   {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBEnter = &cbHSV,             .CBExit = &cbExitHSV } },
   {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBEnter = &cbRainbow,         .CBExit = &cbExitRainbow } },
   {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBEnter = 0,                  .CBExit = 0 } },
-  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig,     .CBEnter = 0,                  .CBExit = 0 } },
+  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 2, .SubMenu = &MenuConfig,     .CBEnter = 0,                  .CBExit = 0 } },
 };
 
 /****************************************************************************
