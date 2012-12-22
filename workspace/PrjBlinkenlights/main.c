@@ -296,6 +296,8 @@ void init_timer() {
  ****************************************************************************/
 
 int cbOff(void* Data) {
+  PersistentRam.Mode = MODE_OFF;
+  infomem_write();
   PWMRGBRed   = 0x0000;
   PWMRGBGreen = 0x0000;
   PWMRGBBlue  = 0x0000;
@@ -499,6 +501,13 @@ int main(void) {
 
   // Clear the timer and enable timer interrupt
   __enable_interrupt();
+
+  // initialize with old color
+  if (PersistentRam.Mode == MODE_RAINBOW) {
+    cbRainbow();
+  } else if (PersistentRam.Mode != MODE_OFF) {
+    cbRGB();
+  }
 
   // main loop
   while (true) {
