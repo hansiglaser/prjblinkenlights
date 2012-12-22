@@ -176,6 +176,9 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
         State->MenuStack[State->MenuStackIndex].Count = Entry->SubMenuData.NumEntries;
         State->MenuStack[State->MenuStackIndex].Flags = 0;
         menu_draw(State);
+        // callback
+        if (Entry->SubMenuData.CBSubmenu)
+          Entry->SubMenuData.CBSubmenu();
         break;
       case metReturn:
         // return from submenu

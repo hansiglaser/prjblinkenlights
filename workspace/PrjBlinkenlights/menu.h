@@ -23,6 +23,7 @@ typedef enum {metSimple,metSubmenu,metReturn,metNumber,metString} TMenuEntryType
 typedef int (*TMenuSimpleCallback)(void* Data);
 typedef int (*TMenuNumberValueCallback)(int Delta,void* Data);
 typedef void (*TMenuNumberChangeCallback)();
+typedef void (*TMenuSubmenuCallback)();
 
 typedef struct {
   TMenuEntryType Type;
@@ -35,6 +36,7 @@ typedef struct {
     struct {
       int NumEntries;
       void* SubMenu;
+      TMenuSubmenuCallback CBSubmenu;
     } SubMenuData;
     struct {
       char Unit;

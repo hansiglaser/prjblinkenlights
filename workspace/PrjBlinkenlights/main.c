@@ -449,17 +449,18 @@ const TMenuEntry MenuConfig[] = {
 //  {.Type = metNumber, .Label = "Geschwindigk.", .NumberData  = {.Unit = '%', .CBValue = 0, .CBData = 0 } },
   // start color: not necessary if we save the current state
   // LCD backlight on/off after power on -> not really necessary, just let it off and fade-in on a button press
+    // TODO: LCD backlight timeout
     {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
 const TMenuEntry MainMenu[] = {
   {.Type = metSimple, .Label = "Aus",               .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
-  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite} },
-  {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB} },
-  {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV} },
-  {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow} },
-  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors} },
-  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig} },
+  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite,      .CBSubmenu = &cbColorTempChange } },
+  {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB,        .CBSubmenu = &cbRGB } },
+  {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBSubmenu = &cbHSV } },
+  {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBSubmenu = &cbRainbow } },
+  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBSubmenu = 0 } },
+  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig,     .CBSubmenu = 0 } },
 };
 
 /****************************************************************************
