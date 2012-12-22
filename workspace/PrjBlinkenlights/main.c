@@ -588,11 +588,11 @@ int8_t RotEncDir = 0;      // direction of last step, to avoid acceleration on r
  * virtual step width.
  */
 int8_t RotEncSpeed(uint8_t Count) {
-  if (Count > 50) {
+  if (Count > 20) {
     return 1;
-  } else if (Count > 20) {
-    return 2;
   } else if (Count > 10) {
+    return 2;
+  } else if (Count > 5) {
     return 3;
   } else {
     return 4;
