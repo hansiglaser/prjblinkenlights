@@ -4,7 +4,7 @@ Project Blinkenlights -- RGB LED Strip Controller
 **Project Blinkenlights** is a RGB LED strip controller. This repository
 includes its hardware and firmware.
 
-.. image:: prjblinkenlights/blob/master/doc/PrjBlinkenlights.360x480.jpg
+.. image:: https://raw.github.com/hansiglaser/prjblinkenlights/master/doc/PrjBlinkenlights.360x480.jpg
    :align: right
    :target: prjblinkenlights/blob/master/doc/PrjBlinkenlights.2112x2816.jpg
 
