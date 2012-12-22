@@ -305,6 +305,7 @@ int cbOff(void* Data) {
   PWMRGBGreen = 0x0000;
   PWMRGBBlue  = 0x0000;
   Semaphores |= SEM_PWM_RGB;
+  Semaphores &= ~SEM_RAINBOW;
   return 0;
 }
 
@@ -348,6 +349,7 @@ void cbColorTempChange() {
   PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
   PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
+  Semaphores &= ~SEM_RAINBOW;
 }
 
 void cbRGB() {
@@ -356,6 +358,7 @@ void cbRGB() {
   PWMRGBGreen = Brightness2PWM(655 * PersistentRam.RGB.RGB.G);
   PWMRGBBlue  = Brightness2PWM(655 * PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
+  Semaphores &= ~SEM_RAINBOW;
   // TODO: update HSV values
 }
 
@@ -372,11 +375,24 @@ void cbHSV() {
   PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
   PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
+  Semaphores &= ~SEM_RAINBOW;
   // TODO: update RGB values
 }
 
+TColor   RainbowHSV;
+uint16_t RainbowHueInc;
+
 void cbRainbow() {
+
+  //   0% -> inc by   1 -> 268.6s periode = 4min 28.6sec
+  // 100% -> inc by 269 ->     1s periode
+
+  RainbowHueInc = ((uint32_t)PersistentRam.RainbowSpeed * 174280 + 0x7FFF) >> 16;   // 174280 = 65536^2/244/101
+  RainbowHSV.HSV.S = 655 * PersistentRam.RainbowSaturation;
+  RainbowHSV.HSV.V = 655 * PersistentRam.RainbowValue;
+
   // TODO: update rainbow parameters
+  Semaphores |= SEM_RAINBOW;
 }
 
 void cbSetUserColor(void* Data) {
@@ -408,9 +424,9 @@ const TMenuEntry MenuHSV[] = {
 };
 
 const TMenuEntry MenuRainbow[] = {
-  {.Type = metNumber, .Label = "Geschwindigk.",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
-  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
-  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = 0/*TODO*/, .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "Geschwindigk.",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowSpeed,      .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowSaturation, .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowValue,      .CBChange = cbRainbow } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
@@ -531,7 +547,16 @@ int main(void) {
     }
 
     // Rainbow ///////////////////////////////////////////////////////////////
-    // TODO
+    if (Semaphores & SEM_RAINBOW) {
+      TColor RGB;
+      RainbowHSV.HSV.H += RainbowHueInc;
+      HSV2RGB(&RainbowHSV,&RGB);
+      // update PWM
+      PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
+      PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
+      PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
+      Semaphores |= SEM_PWM_RGB;
+    }
   }
 
   return 0;

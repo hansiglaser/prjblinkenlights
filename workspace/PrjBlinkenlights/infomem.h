@@ -19,6 +19,9 @@ typedef struct {
   TColor HSV;
   uint16_t ColorTemp;
   uint16_t Intensity;
+  uint16_t RainbowSpeed;
+  uint16_t RainbowSaturation;
+  uint16_t RainbowValue;
 } TPersistent;  // attribute "packed" seems not to be supported :-(
 
 extern TPersistent PersistentRam;
