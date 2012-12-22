@@ -464,7 +464,7 @@ const TMenuEntry MenuConfig[] = {
 
 const TMenuEntry MainMenu[] = {
   {.Type = metSimple, .Label = "Aus",               .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
-  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite,      .CBEnter = &cbColorTempChange, .CBExit = &cbExitColorTemp } },
+  {.Type = metSubmenu,.Label = "Wei"szlig,          .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite,      .CBEnter = &cbColorTempChange, .CBExit = &cbExitColorTemp } },
   {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB,        .CBEnter = &cbRGB,             .CBExit = &cbExitRGB } },
   {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBEnter = &cbHSV,             .CBExit = &cbExitHSV } },
   {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBEnter = &cbRainbow,         .CBExit = &cbExitRainbow } },

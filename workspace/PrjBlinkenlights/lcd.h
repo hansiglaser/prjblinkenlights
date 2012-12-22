@@ -35,6 +35,7 @@
 #define auml  "\341"    // 0xE1 = 11100001 = 0341
 #define ouml  "\358"    // 0xEF = 11101111 = 0357
 #define uuml  "\365"    // 0xF5 = 11110101 = 0365
+#define szlig "\342"    // 0xD2 = 11100010 = 0342
 #define larr  '\177'    // 0x7F = 01111111 = 0277
 #define rarr  '\176'    // 0x7E = 01111110 = 0276
 #define deg   '\337'    // 0xDF = 11011111 = 0337
