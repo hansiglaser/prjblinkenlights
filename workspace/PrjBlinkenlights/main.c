@@ -205,6 +205,8 @@ volatile uint16_t PWMLCD;       // PWM comparison value written to TA0CCR1
 volatile uint16_t PWMRGBRed;    // PWM comparison value written to TA1CCR0
 volatile uint16_t PWMRGBGreen;  // PWM comparison value written to TA1CCR1
 volatile uint16_t PWMRGBBlue;   // PWM comparison value written to TA1CCR2
+volatile TColor   RainbowHSV;
+volatile uint16_t RainbowHueInc;
 
 #define LCD_FADE_IN_STEP     (65536/244)*5   // 1/5 = 0.2s
 #define LCD_FADE_OUT_STEP    (65536/244)/2   // 2s
@@ -337,17 +339,17 @@ int cbColorTempValue(int Delta, void* Data) {
 
 void cbColorTempChange() {
   uint16_t Temp = ColorTempArr[PersistentRam.ColorTemp];
-  TColor RGB;
-  White2RGB(Temp,&RGB);
+  // calculate RGB values
+  White2RGB(Temp,&PersistentRam.RGB);
   // intensity
   uint16_t Intensity = PersistentRam.Intensity;
-  RGB.RGB.R = ((uint32_t)RGB.RGB.R * Intensity) >> 16;
-  RGB.RGB.G = ((uint32_t)RGB.RGB.G * Intensity) >> 16;
-  RGB.RGB.B = ((uint32_t)RGB.RGB.B * Intensity) >> 16;
+  PersistentRam.RGB.RGB.R = ((uint32_t)PersistentRam.RGB.RGB.R * Intensity) >> 16;
+  PersistentRam.RGB.RGB.G = ((uint32_t)PersistentRam.RGB.RGB.G * Intensity) >> 16;
+  PersistentRam.RGB.RGB.B = ((uint32_t)PersistentRam.RGB.RGB.B * Intensity) >> 16;
   // update PWM
-  PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
-  PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
-  PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
+  PWMRGBRed   = Brightness2PWM(PersistentRam.RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(PersistentRam.RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
   Semaphores &= ~SEM_RAINBOW;
 }
@@ -359,28 +361,19 @@ void cbRGB() {
   PWMRGBBlue  = Brightness2PWM(PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
   Semaphores &= ~SEM_RAINBOW;
-  // TODO: update HSV values
 }
 
 void cbHSV() {
-  TColor RGB;
-  TColor HSV;
   // calculate RGB values
-  HSV.HSV.H = 182 * PersistentRam.HSV.HSV.H;
-  HSV.HSV.S = PersistentRam.HSV.HSV.S;
-  HSV.HSV.V = PersistentRam.HSV.HSV.V;
-  HSV2RGB(&HSV,&RGB);
+  HSV2RGB(&PersistentRam.HSV,&PersistentRam.RGB);
   // update PWM
-  PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
-  PWMRGBGreen = Brightness2PWM(RGB.RGB.G);
-  PWMRGBBlue  = Brightness2PWM(RGB.RGB.B);
+  PWMRGBRed   = Brightness2PWM(PersistentRam.RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(PersistentRam.RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
   Semaphores &= ~SEM_RAINBOW;
   // TODO: update RGB values
 }
-
-TColor   RainbowHSV;
-uint16_t RainbowHueInc;
 
 void cbRainbow() {
 
@@ -400,11 +393,15 @@ void cbSetUserColor(void* Data) {
 
 void cbExitColorTemp() {
   PersistentRam.Mode = MODE_WHITE;
+  // update HSV values (RGB was already set by cbColorTempValue()
+  RGB2HSV(&PersistentRam.RGB,&PersistentRam.HSV);
   infomem_write();
 }
 
 void cbExitRGB() {
   PersistentRam.Mode = MODE_RGB;
+  // update HSV values
+  RGB2HSV(&PersistentRam.RGB,&PersistentRam.HSV);
   infomem_write();
 }
 
@@ -436,7 +433,7 @@ const TMenuEntry MenuRGB[] = {
 };
 
 const TMenuEntry MenuHSV[] = {
-  {.Type = metNumber, .Label = "H: Farbton",        .NumberData  = {.Unit = deg, .CBValue = &cbCircle,       .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "H: Farbton",        .NumberData  = {.Unit = deg, .CBValue = &cbCircle16bit,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
   {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
   {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
@@ -570,7 +567,7 @@ int main(void) {
     if (Semaphores & SEM_RAINBOW) {
       TColor RGB;
       RainbowHSV.HSV.H += RainbowHueInc;
-      HSV2RGB(&RainbowHSV,&RGB);
+      HSV2RGB((TColor*)&RainbowHSV,&RGB);   // type cast to avoid compiler warning about hiding "volatile"
       // update PWM
       PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
       PWMRGBGreen = Brightness2PWM(RGB.RGB.G);

@@ -34,7 +34,7 @@ int cbPercent16bit(int Delta, void* Data) {
       i = 0;
     if (i > 0xFFFF)
       i = 0xFFFF;
-    *((int*)Data) = i;
+    *((uint16_t*)Data) = i;
   }
   return ((uint32_t)(((uint32_t)i) * 100 + 0x7FFF)) >> 16;
 }
@@ -51,6 +51,21 @@ int cbCircle(int Delta, void* Data) {
     i -= 360;
   *((int*)Data) = i;
   return i;
+}
+
+int cbCircle16bit(int Delta, void* Data) {
+  int32_t i = *((uint16_t*)Data);
+  if (Delta != 0) {
+    i += Delta*182;
+    if (i < 0)
+      i += 0x10000;
+    if (i > 0x10000)
+      i -= 0x10000;
+    if (i < 182)   // avoid ... -> 359 -> 360 -> 1 -> 2 -> ...
+      i = 0;
+    *((uint16_t*)Data) = i;
+  }
+  return ((uint32_t)(((uint32_t)i) * 360 + 0x7FFF)) >> 16;
 }
 
 /****************************************************************************
