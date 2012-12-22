@@ -36,7 +36,8 @@ typedef struct {
     struct {
       int NumEntries;
       void* SubMenu;
-      TMenuSubmenuCallback CBSubmenu;
+      TMenuSubmenuCallback CBEnter;
+      TMenuSubmenuCallback CBExit;
     } SubMenuData;
     struct {
       char Unit;

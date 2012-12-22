@@ -399,6 +399,26 @@ void cbSetUserColor(void* Data) {
   // TODO: user color
 }
 
+void cbExitColorTemp() {
+  PersistentRam.Mode = MODE_WHITE;
+  infomem_write();
+}
+
+void cbExitRGB() {
+  PersistentRam.Mode = MODE_RGB;
+  infomem_write();
+}
+
+void cbExitHSV() {
+  PersistentRam.Mode = MODE_HSV;
+  infomem_write();
+}
+
+void cbExitRainbow() {
+  PersistentRam.Mode = MODE_RAINBOW;
+  infomem_write();
+}
+
 /****************************************************************************
  **** Menu ******************************************************************
  ****************************************************************************/
@@ -455,12 +475,12 @@ const TMenuEntry MenuConfig[] = {
 
 const TMenuEntry MainMenu[] = {
   {.Type = metSimple, .Label = "Aus",               .SimpleData  = {.Callback = &cbOff, .CBData = 0}},
-  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite,      .CBSubmenu = &cbColorTempChange } },
-  {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB,        .CBSubmenu = &cbRGB } },
-  {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBSubmenu = &cbHSV } },
-  {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBSubmenu = &cbRainbow } },
-  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBSubmenu = 0 } },
-  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig,     .CBSubmenu = 0 } },
+  {.Type = metSubmenu,.Label = "Weiss",             .SubMenuData = {.NumEntries = 3, .SubMenu = &MenuWhite,      .CBEnter = &cbColorTempChange, .CBExit = &cbExitColorTemp } },
+  {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB,        .CBEnter = &cbRGB,             .CBExit = &cbExitRGB } },
+  {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBEnter = &cbHSV,             .CBExit = &cbExitHSV } },
+  {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBEnter = &cbRainbow,         .CBExit = &cbExitRainbow } },
+  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBEnter = 0,                  .CBExit = 0 } },
+  {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 1, .SubMenu = &MenuConfig,     .CBEnter = 0,                  .CBExit = 0 } },
 };
 
 /****************************************************************************

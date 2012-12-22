@@ -18,6 +18,7 @@
  */
 TPersistent PersistentFlash __attribute__((section(".infomem"))) = {
   .Version = 0,
+  .Mode    = MODE_OFF,
   .RGB = {.RGB.R =   0, .RGB.G =   0, .RGB.B =  50},
   .HSV = {.HSV.V =   0, .HSV.S = 100, .HSV.V =  50},
   .ColorTemp         = 10,

@@ -13,8 +13,15 @@
 
 #include "color.h"
 
+#define MODE_OFF      0x00
+#define MODE_WHITE    0x01
+#define MODE_RGB      0x02
+#define MODE_HSV      0x03
+#define MODE_RAINBOW  0x04
+
 typedef struct {
   uint8_t Version;
+  uint8_t Mode;           ///< use MODE_*
   TColor RGB;
   TColor HSV;
   uint16_t ColorTemp;

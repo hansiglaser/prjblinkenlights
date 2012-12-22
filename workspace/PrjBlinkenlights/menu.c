@@ -177,8 +177,8 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
         State->MenuStack[State->MenuStackIndex].Flags = 0;
         menu_draw(State);
         // callback
-        if (Entry->SubMenuData.CBSubmenu)
-          Entry->SubMenuData.CBSubmenu();
+        if (Entry->SubMenuData.CBEnter)
+          Entry->SubMenuData.CBEnter();
         break;
       case metReturn:
         // return from submenu
@@ -186,6 +186,12 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
           break;  // already at top level, can't return from submenu
         State->MenuStackIndex--;
         menu_draw(State);
+        // callback
+        SubState = State->MenuStack + State->MenuStackIndex;
+        Menu  = SubState->Menu;
+        Entry = Menu + SubState->Item;
+        if (Entry->SubMenuData.CBExit)
+          Entry->SubMenuData.CBExit();
         break;
       case metNumber:
         // menu entry was selected -> edit
@@ -205,6 +211,12 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
         break;  // already at top level, can't return from submenu
       State->MenuStackIndex--;
       menu_draw(State);
+      // callback
+      SubState = State->MenuStack + State->MenuStackIndex;
+      Menu  = SubState->Menu;
+      Entry = Menu + SubState->Item;
+      if (Entry->SubMenuData.CBExit)
+        Entry->SubMenuData.CBExit();
       break;
     case meRotate:
       // up/down
