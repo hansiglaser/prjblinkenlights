@@ -298,7 +298,7 @@ void menu_handle_event(TMenuState* State, TMenuEvent Event, int Rotate) {
       switch (Entry->Type) {
       case metNumber:
         Entry->NumberData.CBValue(Rotate,Entry->NumberData.CBData);
-        Entry->NumberData.CBChange();
+        if (Entry->NumberData.CBChange) Entry->NumberData.CBChange();
         break;
       case metString:
         // TODO: Entry->StringData.CBChange();

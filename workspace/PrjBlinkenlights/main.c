@@ -189,8 +189,6 @@ volatile uint8_t TimeoutReached;  // ISR -> main(): bit field signalling which t
 #define TIMEOUT_REACHED_LCD_BACKLIGHT    0x01
 volatile uint16_t TimeoutLcdBacklight;
 
-#define TIMEOUT_LCD_BACKLIGHT    244*3    // 3 seconds
-
 volatile uint8_t Semaphores = 0;  // main() -> ISR
 #define SEM_PWM_LCD      0x01     // new value for LCD backlight
 #define SEM_PWM_RGB      0x02     // new values for RGB LED strip
@@ -456,11 +454,10 @@ TMenuEntry MenuUserColors[] = {
 };
 
 const TMenuEntry MenuConfig[] = {
-//  {.Type = metNumber, .Label = "Geschwindigk.", .NumberData  = {.Unit = '%', .CBValue = 0, .CBData = 0 } },
+  {.Type = metNumber, .Label = "LCD Timeout",       .NumberData  = {.Unit = 's', .CBValue = &cbPercent, .CBData = &PersistentRam.LCDTimeout, .CBChange = 0 } },
   // start color: not necessary if we save the current state
   // LCD backlight on/off after power on -> not really necessary, just let it off and fade-in on a button press
-    // TODO: LCD backlight timeout
-    {.Type = metReturn, .Label = "Zur"uuml"ck" },
+  {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
 const TMenuEntry MainMenu[] = {
@@ -517,7 +514,7 @@ int main(void) {
     else UserAction = false;
     // fade-in LCD backlight on user action
     if (UserAction) {
-      TimeoutLcdBacklight = TIMEOUT_LCD_BACKLIGHT;  // reset timeout
+      TimeoutLcdBacklight = PersistentRam.LCDTimeout*244;  // reset timeout (set to 0 to disable timeout)
       // fade-in LCD backlight, 3 cases: on, fade-in, fade-out
       if ((LedLcdBacklight != 0xFFFF) && !(Semaphores & SEM_LCD_FADE_IN)) {
         Semaphores &= ~SEM_LCD_FADE_OUT;

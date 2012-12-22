@@ -22,10 +22,11 @@
 typedef struct {
   uint8_t Version;
   uint8_t Mode;           ///< use MODE_*
-  TColor RGB;
-  TColor HSV;
+  uint16_t LCDTimeout;
   uint16_t ColorTemp;
   uint16_t Intensity;
+  TColor RGB;
+  TColor HSV;
   uint16_t RainbowSpeed;
   uint16_t RainbowSaturation;
   uint16_t RainbowValue;
