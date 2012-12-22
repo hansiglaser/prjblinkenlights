@@ -236,16 +236,16 @@ void White2RGB(uint16_t Temp, TColor* RGB) {
   // red
   a = White2RGBRed[Index];
   b = White2RGBRed[Index + 1];
-  d = b-a;
-  y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
-  RGB->RGB.R = a + (y >> WHITE2RGB_VALUES_SHIFT);
+  d = (uint32_t)b-(uint32_t)a;
+  y = (int32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+  RGB->RGB.R = a + ((int32_t)y >> WHITE2RGB_VALUES_SHIFT);
 
   // green
   a = White2RGBGreen[Index];
   b = White2RGBGreen[Index + 1];
-  d = b-a;
-  y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
-  RGB->RGB.G = a + (y >> WHITE2RGB_VALUES_SHIFT);
+  d = (uint32_t)b-(uint32_t)a;
+  y = (int32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+  RGB->RGB.G = a + ((int32_t)y >> WHITE2RGB_VALUES_SHIFT);
 
   // blue
   if (Temp < 1900-WHITE2RGB_VALUES_START) {
@@ -253,9 +253,9 @@ void White2RGB(uint16_t Temp, TColor* RGB) {
   } else {
     a = White2RGBBlue[Index];
     b = White2RGBBlue[Index + 1];
-    d = b-a;
-    y = (uint32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
-    RGB->RGB.B = a + (y >> WHITE2RGB_VALUES_SHIFT);
+    d = (uint32_t)b-(uint32_t)a;
+    y = (int32_t)d * (uint32_t)Inter + (WHITE2RGB_VALUES_MASK >> 1);  // round
+    RGB->RGB.B = a + ((int32_t)y >> WHITE2RGB_VALUES_SHIFT);
   }
 #else
   float R,G,B;
