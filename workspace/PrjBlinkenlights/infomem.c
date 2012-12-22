@@ -18,13 +18,13 @@
  */
 TPersistent PersistentFlash __attribute__((section(".infomem"))) = {
   .Version           = 0,
-  .Mode              = MODE_OFF,
+  .Mode              = MODE_RAINBOW,
   .LCDTimeout        = 10,                     // seconds
   .ColorTemp         = 25,                     // 6000K
   .Intensity         = 0x8000,                 // 50% intensity
   .RGB               = {.RGB.R =   0, .RGB.G =      0, .RGB.B = 0x8000},
   .HSV               = {.HSV.V =   0, .HSV.S = 0xFFFF, .HSV.V = 0x8000},
-  .RainbowSpeed      = (65536*20+32768)/100,   // 20% (rounded)
+  .RainbowSpeed      = (65536*15+32768)/100,   // 15% (rounded)
   .RainbowSaturation = 0xFFFF,                 // 100% saturation
   .RainbowValue      = 0x8000,                 // 50% intensity
 };
