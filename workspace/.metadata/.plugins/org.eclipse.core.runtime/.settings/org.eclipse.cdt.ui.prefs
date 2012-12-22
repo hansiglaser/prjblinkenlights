@@ -11,5 +11,6 @@ properties.multi.displ.mode=1
 properties.multi.write.mode=4
 sourceHoverBackgroundColor=231,243,253
 spelling_locale_initialized=true
+spelling_user_dictionary_encoding=
 useAnnotationsPrefPage=true
 useQuickDiffPrefPage=true
