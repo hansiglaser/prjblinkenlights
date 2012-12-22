@@ -58,6 +58,7 @@ typedef struct {
  ****************************************************************************/
 
 int cbPercent(int Delta, void* Data);
+int cbPercent16bit(int Delta, void* Data);
 int cbCircle(int Delta, void* Data);
 
 /****************************************************************************

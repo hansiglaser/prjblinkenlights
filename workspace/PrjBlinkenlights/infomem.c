@@ -19,13 +19,13 @@
 TPersistent PersistentFlash __attribute__((section(".infomem"))) = {
   .Version = 0,
   .Mode    = MODE_OFF,
-  .RGB = {.RGB.R =   0, .RGB.G =   0, .RGB.B =  50},
-  .HSV = {.HSV.V =   0, .HSV.S = 100, .HSV.V =  50},
+  .RGB = {.RGB.R =   0, .RGB.G =      0, .RGB.B = 0x8000},
+  .HSV = {.HSV.V =   0, .HSV.S = 0xFFFF, .HSV.V = 0x8000},
   .ColorTemp         = 10,
-  .Intensity         = 50,
-  .RainbowSpeed      = 20,
-  .RainbowSaturation = 100,
-  .RainbowValue      = 50,
+  .Intensity         = 0x8000,
+  .RainbowSpeed      = (65536*20+32768)/100,
+  .RainbowSaturation = 0xFFFF,
+  .RainbowValue      = 0x8000,
 };
 
 /**

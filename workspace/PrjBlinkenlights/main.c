@@ -340,7 +340,7 @@ void cbColorTempChange() {
   TColor RGB;
   White2RGB(Temp,&RGB);
   // intensity
-  uint16_t Intensity = 655 * PersistentRam.Intensity;
+  uint16_t Intensity = PersistentRam.Intensity;
   RGB.RGB.R = ((uint32_t)RGB.RGB.R * Intensity) >> 16;
   RGB.RGB.G = ((uint32_t)RGB.RGB.G * Intensity) >> 16;
   RGB.RGB.B = ((uint32_t)RGB.RGB.B * Intensity) >> 16;
@@ -354,9 +354,9 @@ void cbColorTempChange() {
 
 void cbRGB() {
   // update PWM
-  PWMRGBRed   = Brightness2PWM(655 * PersistentRam.RGB.RGB.R);
-  PWMRGBGreen = Brightness2PWM(655 * PersistentRam.RGB.RGB.G);
-  PWMRGBBlue  = Brightness2PWM(655 * PersistentRam.RGB.RGB.B);
+  PWMRGBRed   = Brightness2PWM(PersistentRam.RGB.RGB.R);
+  PWMRGBGreen = Brightness2PWM(PersistentRam.RGB.RGB.G);
+  PWMRGBBlue  = Brightness2PWM(PersistentRam.RGB.RGB.B);
   Semaphores |= SEM_PWM_RGB;
   Semaphores &= ~SEM_RAINBOW;
   // TODO: update HSV values
@@ -367,8 +367,8 @@ void cbHSV() {
   TColor HSV;
   // calculate RGB values
   HSV.HSV.H = 182 * PersistentRam.HSV.HSV.H;
-  HSV.HSV.S = 655 * PersistentRam.HSV.HSV.S;
-  HSV.HSV.V = 655 * PersistentRam.HSV.HSV.V;
+  HSV.HSV.S = PersistentRam.HSV.HSV.S;
+  HSV.HSV.V = PersistentRam.HSV.HSV.V;
   HSV2RGB(&HSV,&RGB);
   // update PWM
   PWMRGBRed   = Brightness2PWM(RGB.RGB.R);
@@ -387,11 +387,10 @@ void cbRainbow() {
   //   0% -> inc by   1 -> 268.6s periode = 4min 28.6sec
   // 100% -> inc by 269 ->     1s periode
 
-  RainbowHueInc = ((uint32_t)PersistentRam.RainbowSpeed * 174280 + 0x7FFF) >> 16;   // 174280 = 65536^2/244/101
-  RainbowHSV.HSV.S = 655 * PersistentRam.RainbowSaturation;
-  RainbowHSV.HSV.V = 655 * PersistentRam.RainbowValue;
+  RainbowHueInc = (((uint32_t)PersistentRam.RainbowSpeed * 269 + 0x7FFF) >> 16) + 1;
+  RainbowHSV.HSV.S = PersistentRam.RainbowSaturation;
+  RainbowHSV.HSV.V = PersistentRam.RainbowValue;
 
-  // TODO: update rainbow parameters
   Semaphores |= SEM_RAINBOW;
 }
 
@@ -424,29 +423,29 @@ void cbExitRainbow() {
  ****************************************************************************/
 
 const TMenuEntry MenuWhite[] = {
-  {.Type = metNumber, .Label = "Helligkeit",        .NumberData  = {.Unit = '%', .CBValue = &cbPercent,        .CBData = &PersistentRam.Intensity, .CBChange = cbColorTempChange } },
+  {.Type = metNumber, .Label = "Helligkeit",        .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit,   .CBData = &PersistentRam.Intensity, .CBChange = cbColorTempChange } },
   {.Type = metNumber, .Label = "Farbtemp.",         .NumberData  = {.Unit = 'K', .CBValue = &cbColorTempValue, .CBData = &PersistentRam.ColorTemp, .CBChange = cbColorTempChange } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" },
 };
 
 const TMenuEntry MenuRGB[] = {
-  {.Type = metNumber, .Label = "Rot",               .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
-  {.Type = metNumber, .Label = "Gr"uuml"n",         .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
-  {.Type = metNumber, .Label = "Blau",              .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Rot",               .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RGB.RGB.R, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Gr"uuml"n",         .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RGB.RGB.G, .CBChange = cbRGB } },
+  {.Type = metNumber, .Label = "Blau",              .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RGB.RGB.B, .CBChange = cbRGB } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
 const TMenuEntry MenuHSV[] = {
-  {.Type = metNumber, .Label = "H: Farbton",        .NumberData  = {.Unit = deg, .CBValue = &cbCircle,  .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
-  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
-  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "H: Farbton",        .NumberData  = {.Unit = deg, .CBValue = &cbCircle,       .CBData = &PersistentRam.HSV.HSV.H, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.HSV.HSV.S, .CBChange = cbHSV } },
+  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.HSV.HSV.V, .CBChange = cbHSV } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
 const TMenuEntry MenuRainbow[] = {
-  {.Type = metNumber, .Label = "Geschwindigk.",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowSpeed,      .CBChange = cbRainbow } },
-  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowSaturation, .CBChange = cbRainbow } },
-  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent, .CBData = &PersistentRam.RainbowValue,      .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "Geschwindigk.",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RainbowSpeed,      .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "S: S"auml"ttigung", .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RainbowSaturation, .CBChange = cbRainbow } },
+  {.Type = metNumber, .Label = "V: Helligkeit",     .NumberData  = {.Unit = '%', .CBValue = &cbPercent16bit, .CBData = &PersistentRam.RainbowValue,      .CBChange = cbRainbow } },
   {.Type = metReturn, .Label = "Zur"uuml"ck" }
 };
 
