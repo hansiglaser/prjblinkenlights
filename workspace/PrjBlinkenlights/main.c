@@ -297,7 +297,6 @@ void init_timer() {
 
 int cbOff(void* Data) {
   PersistentRam.Mode = MODE_OFF;
-  infomem_write();
   PWMRGBRed   = 0x0000;
   PWMRGBGreen = 0x0000;
   PWMRGBBlue  = 0x0000;
@@ -389,24 +388,25 @@ void cbExitColorTemp() {
   PersistentRam.Mode = MODE_WHITE;
   // update HSV values (RGB was already set by cbColorTempValue()
   RGB2HSV(&PersistentRam.RGB,&PersistentRam.HSV);
-  infomem_write();
 }
 
 void cbExitRGB() {
   PersistentRam.Mode = MODE_RGB;
   // update HSV values
   RGB2HSV(&PersistentRam.RGB,&PersistentRam.HSV);
-  infomem_write();
 }
 
 void cbExitHSV() {
   PersistentRam.Mode = MODE_HSV;
-  infomem_write();
 }
 
 void cbExitRainbow() {
   PersistentRam.Mode = MODE_RAINBOW;
+}
+
+int cbSave(void* Data) {
   infomem_write();
+  return 0;
 }
 
 /****************************************************************************
@@ -468,7 +468,8 @@ const TMenuEntry MainMenu[] = {
   {.Type = metSubmenu,.Label = "RGB",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRGB,        .CBEnter = &cbRGB,             .CBExit = &cbExitRGB } },
   {.Type = metSubmenu,.Label = "HSV",               .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuHSV,        .CBEnter = &cbHSV,             .CBExit = &cbExitHSV } },
   {.Type = metSubmenu,.Label = "Regenbogen",        .SubMenuData = {.NumEntries = 4, .SubMenu = &MenuRainbow,    .CBEnter = &cbRainbow,         .CBExit = &cbExitRainbow } },
-  {.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBEnter = 0,                  .CBExit = 0 } },
+//{.Type = metSubmenu,.Label = "Eigene Farben",     .SubMenuData = {.NumEntries = 6, .SubMenu = &MenuUserColors, .CBEnter = 0,                  .CBExit = 0 } },
+  {.Type = metSimple, .Label = "Farbe speich.",     .SimpleData  = {.Callback = &cbSave, .CBData = 0}},
   {.Type = metSubmenu,.Label = "Konfiguration",     .SubMenuData = {.NumEntries = 2, .SubMenu = &MenuConfig,     .CBEnter = 0,                  .CBExit = 0 } },
 };
 
