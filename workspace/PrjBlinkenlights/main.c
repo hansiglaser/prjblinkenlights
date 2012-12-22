@@ -193,9 +193,10 @@ volatile uint8_t Semaphores = 0;  // main() -> ISR
 #define SEM_PWM_LCD      0x01     // new value for LCD backlight
 #define SEM_PWM_RGB      0x02     // new values for RGB LED strip
 #define SEM_LCD_FADE_IN  0x04     // leave LPM0 after ISR, so that main() can calculate LCD backlight fade-in
-#define SEM_LCD_FADE_OUT 0x08     // leave LPM0 after ISR, so that main() can calculate LCD backlight fade-in
+#define SEM_LCD_FADE_OUT 0x08     // leave LPM0 after ISR, so that main() can calculate LCD backlight fade-out
 #define SEM_RAINBOW      0x10     // leave LPM0 after ISR, so that main() can calculate rainbow colors
-#define SEM_PERIODIC     (SEM_LCD_FADE_IN | SEM_LCD_FADE_OUT | SEM_RAINBOW)
+#define SEM_RGB_FADE_IN  0x20     // leave LPM0 after ISR, so that main() can calculate RGB fade-in
+#define SEM_PERIODIC     (SEM_LCD_FADE_IN | SEM_LCD_FADE_OUT | SEM_RAINBOW | SEM_RGB_FADE_IN)
 // note: these SEM_PERIODIC semaphores are not reset by the ISR, because they
 // are used by main() so it knows it is performing an ongoing task
 
@@ -204,10 +205,11 @@ volatile uint16_t PWMRGBRed;    // PWM comparison value written to TA1CCR0
 volatile uint16_t PWMRGBGreen;  // PWM comparison value written to TA1CCR1
 volatile uint16_t PWMRGBBlue;   // PWM comparison value written to TA1CCR2
 volatile TColor   RainbowHSV;
-volatile uint16_t RainbowHueInc;
+volatile uint16_t RainbowHueInc;  // this is also (mis-)used for power-on RGB fade-in
 
 #define LCD_FADE_IN_STEP     (65536/244)*5   // 1/5 = 0.2s
 #define LCD_FADE_OUT_STEP    (65536/244)/2   // 2s
+#define PWM_FADE_IN_STEP     (65536/244)*2   // 1/2 = 0.5s
 
 /****************************************************************************
  **** Initialization ********************************************************
@@ -507,7 +509,8 @@ int main(void) {
   if (PersistentRam.Mode == MODE_RAINBOW) {
     cbRainbow();
   } else if (PersistentRam.Mode != MODE_OFF) {
-    cbRGB();
+    RainbowHueInc = 0;
+    Semaphores |= SEM_RGB_FADE_IN;
   }
 
   // main loop
@@ -562,6 +565,21 @@ int main(void) {
       }
       PWMLCD = Brightness2PWM(LedLcdBacklight);
       Semaphores |= SEM_PWM_LCD;  // notify ISR to update timer comparison register
+    }
+
+    // RGB Fade-In ///////////////////////////////////////////////////////////
+    if (Semaphores & SEM_RGB_FADE_IN) {
+      RainbowHueInc += PWM_FADE_IN_STEP;
+      if (RainbowHueInc < 0xFFFF-PWM_FADE_IN_STEP) {
+        // update PWM
+        PWMRGBRed   = Brightness2PWM((uint32_t)PersistentRam.RGB.RGB.R * RainbowHueInc >> 16);
+        PWMRGBGreen = Brightness2PWM((uint32_t)PersistentRam.RGB.RGB.G * RainbowHueInc >> 16);
+        PWMRGBBlue  = Brightness2PWM((uint32_t)PersistentRam.RGB.RGB.B * RainbowHueInc >> 16);
+        Semaphores |= SEM_PWM_RGB;
+      } else {
+        cbRGB();
+        Semaphores &= ~SEM_RGB_FADE_IN;
+      }
     }
 
     // Rainbow ///////////////////////////////////////////////////////////////
