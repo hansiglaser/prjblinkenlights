@@ -33,6 +33,17 @@
  *  > prog blinki.elf
  *  > run
  *
+ * Stand alone debugging with GDB
+ *  - compile with '-g' for debug info
+ *  $ mspdebug rf2500 "prog blinki.elf" gdb
+ *  $ msp430-gdb blinki.elf
+ *  > target remote localhost:2000
+ *  > break blinki.c:84
+ *  > continue
+ *  > print i
+ *  > disable
+ *  > continue
+ *
  * Note: How to find out a list of all GCC preprocessor defines
  *  $ msp430-gcc -mmcu=msp430f2331 -E -dM blinki.c | grep MSP430 | sort
  */
