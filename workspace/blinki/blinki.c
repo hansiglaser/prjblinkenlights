@@ -25,6 +25,12 @@
  *           - Port number: "2000"
  *     - [Debug]
  *
+ * Stand alone (without Eclipse)
+ *  $ msp430-gcc -mmcu=msp430g2231 -o blinki.elf blinki.c
+ *  $ mspdebug rf2500
+ *  > prog blinki.elf
+ *  > run
+ *
  */
 
 #include <msp430g2231.h>
