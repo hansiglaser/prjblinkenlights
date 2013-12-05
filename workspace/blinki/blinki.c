@@ -46,6 +46,29 @@
  *
  * Note: How to find out a list of all GCC preprocessor defines
  *  $ msp430-gcc -mmcu=msp430f2331 -E -dM blinki.c | grep MSP430 | sort
+ *
+ * Note: Using (cheap) LaunchPad to download/debug larger MSP430 (e.g.
+ * MSP430F5438)
+ *  - LaunchPad only supports Spy-Bi-Wire but no JTAG
+ *  - Therefore only MSP430 with Spy-Bi-Wire interface are possible (e.g.
+ *    MSP43FG4618 only supports JTAG, so this cannot be used with the LaunchPad)
+ *  - LaunchPad Rev. 1.4:
+ *      J3.10 = SBWTCK
+ *      J3.8  = SBWTDIO
+ *      J6.3  = GND
+ *  - LaunchPad Rev. 1.5:
+ *      J3.8  = SBWTCK
+ *      J3.6  = SBWTDIO
+ *      J6.3  = GND
+ *  - MSP-EXP430F5438:
+ *      JTAG.11 = SBWTDIO (and #RST, NMI)
+ *      JTAG.8  = SWBTCK  (and TEST)
+ *      JTAG.9  = GND
+ *    Supply might also be possible via the LaunchPad (LDO supplies up to
+ *    250mA, but gets really hot then). The MSP-EXP430F5438 board consumes up
+ *    to 30mA (with LCD backlight on, see SLAU263H User's Guide July 2013
+ *    p. 21), so it should be perfectly ok.
+ *
  */
 
 #ifdef __MSP430G2231__
