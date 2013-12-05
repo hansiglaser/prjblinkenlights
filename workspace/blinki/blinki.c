@@ -26,17 +26,38 @@
  *     - [Debug]
  *
  * Stand alone (without Eclipse)
- *  $ msp430-gcc -mmcu=msp430g2231 -o blinki.elf blinki.c
+ *  $ msp430-gcc -mmcu=msp430g2231 -o blinki.elf blinki.c   # LaunchPad Rev. 1.4
+ *  $ msp430-gcc -mmcu=msp430g2553 -o blinki.elf blinki.c   # LaunchPad Rev. 1.5
+ *  $ msp430-gcc -mmcu=msp430f5438 -o blinki.elf blinki.c   # MSP-EXP430F5438
  *  $ mspdebug rf2500
  *  > prog blinki.elf
  *  > run
  *
+ * Note: How to find out a list of all GCC preprocessor defines
+ *  $ msp430-gcc -mmcu=msp430f2331 -E -dM blinki.c | grep MSP430 | sort
  */
 
-#include <msp430g2231.h>
+#ifdef __MSP430G2231__
+#  include <msp430g2231.h>
+#endif
+#ifdef __MSP430G2553__
+#  include <msp430g2553.h>
+#endif
+#ifdef __MSP430F5438__
+#  include <msp430f5438.h>
+#endif
 
-#define LED_R 0x01
-#define LED_G 0x40
+#if __MSP430G2231__ || __MSP430G2553__ 
+// LaunchPad: P1.0 (red LED) and P1.6 (green LED)
+#  define LED_R 0x01
+#  define LED_G 0x40
+#endif
+
+#if __MSP430F5438__
+// MSP-EXP430F5438: P1.0 (LED1) and P1.1 (LED2)
+#  define LED_R 0x01
+#  define LED_G 0x02
+#endif
 #define LEDS  (LED_R | LED_G)
 
 unsigned int i = 0;
@@ -46,14 +67,14 @@ int main(void) {
   WDTCTL = WDTPW + WDTHOLD;
 
   // enable P1.0 (red LED) and P1.6 (green LED) as outputs
-  P1DIR |= 0x01 | 0x40;
+  P1DIR |= LEDS;
   // switch on red LED and switch off green LED
-  P1OUT = (P1OUT & ~(0x01 | 0x40)) | 0x01;
+  P1OUT = (P1OUT & ~LEDS) | LED_R;
 
   // main loop
   for (;;) {
     // toggle LEDs
-    P1OUT ^= 0x01 | 0x40;
+    P1OUT ^= LEDS;
     // delay
     for(i=0; i< 20000; i++);
   }
